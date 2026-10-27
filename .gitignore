@@ -1,0 +1,13 @@
+.env
+*.pyc
+__pycache__/
+.venv/
+venv/
+staticfiles/
+private_media/*
+!private_media/.gitkeep
+*.sqlite3
+.pytest_cache/
+.coverage
+backups/
+*.dump

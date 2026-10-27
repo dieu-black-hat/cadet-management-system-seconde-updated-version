@@ -1,0 +1,12 @@
+{% extends "app_base.html" %}{% block title %}{% if is_new %}Invite user{% else %}Edit user{% endif %}{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'accounts:user_list' %}">Users</a></li><li class="breadcrumb-item active" aria-current="page">{% if is_new %}Invite{% else %}{{ target.display_name }}{% endif %}</li></ol></nav>{% endblock %}
+{% block page_title %}{% if is_new %}Invite a user{% else %}Edit {{ target.display_name }}{% endif %}{% endblock %}
+{% block content %}
+<section class="panel" style="max-width: 860px"><div class="panel-body">
+  {% if is_new %}<p class="text-muted">The person receives a single-use link to set their own password. Administrators never choose or see passwords. After creating the account, assign their unit so they can see the right cadets.</p>{% endif %}
+  <form method="post" novalidate>{% csrf_token %}{% include "components/form_fields.html" %}
+    <div class="mt-4 d-flex gap-2"><button class="btn btn-primary" type="submit">{% if is_new %}Create account & send invitation{% else %}Save changes{% endif %}</button>
+    <a class="btn btn-link" href="{% if is_new %}{% url 'accounts:user_list' %}{% else %}{% url 'accounts:user_detail' target.pk %}{% endif %}">Cancel</a></div>
+  </form>
+</div></section>
+{% endblock %}

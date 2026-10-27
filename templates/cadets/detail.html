@@ -1,0 +1,121 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}{{ cadet.full_name }}{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'cadets:list' %}">Cadets</a></li><li class="breadcrumb-item active" aria-current="page">{{ cadet.cadet_number }}</li></ol></nav>{% endblock %}
+{% block page_title %}{{ cadet.full_name }}{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">{{ cadet.cadet_number }} · {{ cadet.get_status_display }}{% if cadet.is_archived %} · <strong>Archived</strong>{% endif %}</p>{% endblock %}
+{% block page_actions %}
+  {% if user|has_perm:"statements.create" and not cadet.is_archived %}<a class="btn btn-accent" href="{% url 'discipline:create' %}?cadet={{ cadet.pk }}"><i class="bi bi-journal-plus me-1"></i>New statement</a>{% endif %}
+  {% if user|has_perm:"medical.edit" %}<a class="btn btn-outline-primary" href="{% url 'medical:create' %}?cadet={{ cadet.pk }}"><i class="bi bi-file-earmark-medical me-1"></i>Medical record</a>{% endif %}
+  {% if user|has_perm:"cadets.edit" %}<a class="btn btn-outline-primary" href="{% url 'cadets:edit' cadet.pk %}"><i class="bi bi-pencil me-1"></i>Edit</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-xl-4">
+    <section class="panel mb-3"><div class="panel-body">
+      <div class="d-flex align-items-center gap-3 mb-3">
+        {% if cadet.photo %}<img class="profile-photo" src="{% url 'cadets:photo' cadet.pk %}" alt="Photo of {{ cadet.full_name }}">{% else %}<span class="profile-photo" aria-hidden="true">{{ cadet.initials }}</span>{% endif %}
+        <div>{% if assessment is not None %}{% grade assessment %}{% endif %}</div>
+      </div>
+      <dl class="kv">
+        <dt>Cadet number</dt><dd>{{ cadet.cadet_number }}</dd>
+        <dt>Gender</dt><dd>{{ cadet.get_gender_display }}</dd>
+        <dt>Intake</dt><dd>{{ cadet.intake }}</dd>
+        <dt>Company</dt><dd>{{ cadet.company|default:"Unassigned" }}</dd>
+        <dt>Platoon</dt><dd>{{ cadet.platoon.name|default:"Unassigned" }}</dd>
+        <dt>Admission</dt><dd>{{ cadet.admission_date|date:"j M Y" }}</dd>
+        <dt>Status</dt><dd>{{ cadet.get_status_display }}</dd>
+        {% if cadet.notes %}<dt>Notes</dt><dd>{{ cadet.notes|linebreaksbr }}</dd>{% endif %}
+      </dl>
+    </div></section>
+
+    {% if fitness is not None or user|has_perm:"medical.view_summary" %}
+    <section class="panel mb-3"><div class="panel-head"><h2>Medical fitness summary</h2><i class="bi bi-lock text-muted" title="Restricted" aria-hidden="true"></i></div><div class="panel-body">
+      {% if fitness %}
+        <p class="mb-1"><strong>{{ fitness.get_fitness_status_display }}</strong></p>
+        {% if fitness.command_summary %}<p class="small mb-1">{{ fitness.command_summary }}</p>{% endif %}
+        <p class="small text-muted mb-0">Recorded {{ fitness.assessment_date|date:"j M Y" }}. Clinical details are visible to medical staff only.</p>
+        {% if user|has_perm:"medical.view_full" %}<a class="btn btn-sm btn-outline-primary mt-2" href="{% url 'medical:cadet' cadet.pk %}">Open medical file</a>{% endif %}
+      {% else %}<p class="small text-muted mb-0">No fitness summary has been released.</p>
+        {% if user|has_perm:"medical.view_full" %}<a class="btn btn-sm btn-outline-primary mt-2" href="{% url 'medical:cadet' cadet.pk %}">Open medical file</a>{% endif %}{% endif %}
+    </div></section>
+    {% endif %}
+
+    {% if user|has_perm:"cadets.assign" %}
+    <section class="panel mb-3"><div class="panel-head"><h2>Reassign</h2></div><div class="panel-body">
+      <form method="post" action="{% url 'cadets:reassign' cadet.pk %}" data-confirm="Move this cadet? The change is recorded in the assignment history." data-confirm-label="Reassign">{% csrf_token %}
+        {% with form=reassign_form %}
+        <div class="mb-2"><label class="form-label small" for="{{ form.intake.id_for_label }}">Intake</label>{{ form.intake }}</div>
+        <div class="mb-2"><label class="form-label small" for="{{ form.company.id_for_label }}">Company</label>{{ form.company }}</div>
+        <div class="mb-2"><label class="form-label small" for="{{ form.platoon.id_for_label }}">Platoon</label>{{ form.platoon }}</div>
+        <div class="mb-2"><label class="form-label small required" for="{{ form.reason.id_for_label }}">Reason</label>{{ form.reason }}</div>
+        {% endwith %}
+        <button class="btn btn-outline-primary btn-sm" type="submit">Save assignment</button>
+      </form>
+    </div></section>
+    {% endif %}
+
+    {% if user|has_perm:"cadets.edit" %}
+    <section class="panel"><div class="panel-body">
+      {% if cadet.is_archived %}
+      <form method="post" action="{% url 'cadets:archive' cadet.pk %}">{% csrf_token %}<input type="hidden" name="archive" value="0"><button class="btn btn-sm btn-outline-success" type="submit"><i class="bi bi-arrow-counterclockwise me-1"></i>Restore record</button></form>
+      {% else %}
+      <form method="post" action="{% url 'cadets:archive' cadet.pk %}" data-confirm="Archive this cadet record? It is hidden from directories but kept with its full history. Records are never permanently deleted from here." data-confirm-label="Archive" data-confirm-style="btn-danger">{% csrf_token %}<input type="hidden" name="archive" value="1"><button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-archive me-1"></i>Archive record</button></form>
+      {% endif %}
+    </div></section>
+    {% endif %}
+  </div>
+
+  <div class="col-xl-8">
+    {% if user|has_perm:"grading.view" %}
+    <section class="panel mb-3"><div class="panel-head"><h2>Discipline assessment</h2>{% if policy %}<a class="small" href="{% url 'discipline:policy_detail' policy.pk %}">Policy v{{ policy.version }}</a>{% endif %}</div><div class="panel-body">
+      {% if assessment %}
+        <div class="row g-3 align-items-center mb-3">
+          <div class="col-md-5">{% grade assessment %}</div>
+          <div class="col-md-7"><div class="d-flex justify-content-between small text-muted mb-1"><span>Score {{ assessment.score }} of {{ assessment.policy.base_score }}</span><span>{{ assessment.approved_statement_count }} approved statement{{ assessment.approved_statement_count|pluralize }}</span></div>
+            <div class="grade-meter" style="--grade: {{ assessment.band_color }}" role="progressbar" aria-valuenow="{{ assessment.score }}" aria-valuemin="0" aria-valuemax="{{ assessment.policy.base_score }}" aria-label="Discipline score"><div style="width: {% widthratio assessment.score assessment.policy.base_score 100 %}%"></div></div></div>
+        </div>
+        {% if assessment.requires_review %}<div class="alert alert-warning small"><i class="bi bi-person-exclamation me-1"></i>This grade band asks for a human review by the chain of command. It is not a decision and never triggers dismissal automatically.</div>{% endif %}
+        {% if assessment.is_override %}<div class="alert alert-info small"><i class="bi bi-pencil-square me-1"></i>Manual override by {{ assessment.created_by }} on {{ assessment.created_at|date:"j M Y" }} — “{{ assessment.override_reason }}”. Calculated score was {{ assessment.calculated_score }}.</div>{% endif %}
+        <h3 class="h6">How this grade was calculated</h3>
+        <p class="small mb-2">{{ assessment.explanation.formula }} = <strong>{{ assessment.calculated_score }}</strong> ({{ assessment.explanation.period }}, policy {{ assessment.explanation.policy }}).</p>
+        {% if assessment.explanation.items %}
+        <div class="table-responsive"><table class="table table-sm small">
+          <thead><tr><th>Statement</th><th>Date</th><th>Category</th><th>Severity</th><th class="table-num">Deduction</th></tr></thead>
+          <tbody>{% for i in assessment.explanation.items %}<tr><td><a href="{% url 'discipline:detail' i.statement_id %}">{{ i.reference }}</a></td><td>{{ i.date }}</td><td>{{ i.category }}</td><td>{{ i.severity }}</td><td class="table-num">−{{ i.points }}</td></tr>{% endfor %}</tbody>
+        </table></div>
+        {% else %}<p class="small text-muted">No approved statements count against this cadet.</p>{% endif %}
+      {% else %}<p class="text-muted mb-0">Not assessed yet{% if not policy %} — no grading policy is active{% endif %}.</p>{% endif %}
+
+      {% if can_override and assessment %}
+      <details class="mt-3"><summary class="small fw-medium">Record a manual override</summary>
+        <form class="mt-2" method="post" action="{% url 'cadets:override' cadet.pk %}" data-confirm="Record this override? Your name and reason are stored in the audit trail." data-confirm-label="Record override">{% csrf_token %}
+          <div class="row g-2">
+            <div class="col-sm-3"><label class="form-label small" for="ov-score">Score</label><input id="ov-score" class="form-control form-control-sm" type="number" name="score" min="0" max="{{ assessment.policy.base_score }}" required></div>
+            <div class="col-sm-9"><label class="form-label small" for="ov-reason">Reason (min. 10 characters)</label><input id="ov-reason" class="form-control form-control-sm" name="reason" minlength="10" maxlength="255" required></div>
+          </div>
+          <button class="btn btn-sm btn-outline-primary mt-2" type="submit">Record override</button>
+        </form>
+        {% if assessment.is_override %}<form class="mt-2" method="post" action="{% url 'cadets:clear_override' cadet.pk %}">{% csrf_token %}<button class="btn btn-sm btn-link px-0" type="submit">Clear override and recalculate</button></form>{% endif %}
+      </details>{% endif %}
+    </div></section>
+    {% endif %}
+
+    {% if statements is not None %}
+    <section class="panel mb-3"><div class="panel-head"><h2>Disciplinary statements</h2></div>
+      {% if statements %}<div class="table-responsive"><table class="table">
+        <thead><tr><th>Reference</th><th>Incident</th><th>Category</th><th>Severity</th><th>Status</th></tr></thead>
+        <tbody>{% for s in statements %}<tr><td><a href="{% url 'discipline:detail' s.pk %}">{{ s.reference }}</a></td><td>{{ s.title }}<div class="small text-muted">{{ s.incident_at|date:"j M Y" }}</div></td><td>{{ s.category }}</td><td class="sev-{{ s.severity }}">{{ s.get_severity_display }}</td><td>{% status_badge s %}</td></tr>{% endfor %}</tbody>
+      </table></div>{% else %}{% include "components/empty.html" with icon="bi-journal-check" title="No statements you can view" %}{% endif %}
+    </section>
+    {% endif %}
+
+    <div class="row g-3">
+      <div class="col-lg-6"><section class="panel h-100"><div class="panel-head"><h2>Assignment history</h2></div><div class="panel-body">
+        <ul class="timeline">{% for h in history %}<li><div class="small fw-medium">{% if h.to_company %}{{ h.to_company.code }}{% if h.to_platoon %} / {{ h.to_platoon.name }}{% endif %}{% else %}Unassigned{% endif %}{% if h.to_intake and h.to_intake != h.from_intake %} · intake {{ h.to_intake.code }}{% endif %}</div><div class="t-meta">{{ h.changed_at|date:"j M Y" }} by {{ h.changed_by }} — {{ h.reason }}</div></li>{% empty %}<li class="text-muted small">No history.</li>{% endfor %}</ul>
+      </div></section></div>
+      {% if assessment_history %}<div class="col-lg-6"><section class="panel h-100"><div class="panel-head"><h2>Grade history</h2></div><div class="panel-body">
+        <ul class="timeline">{% for a in assessment_history %}<li><div class="small">{% grade a compact=True %}</div><div class="t-meta">{{ a.created_at|date:"j M Y H:i" }} · v{{ a.policy.version }} · {{ a.trigger|truncatechars:40 }}</div></li>{% endfor %}</ul>
+      </div></section></div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

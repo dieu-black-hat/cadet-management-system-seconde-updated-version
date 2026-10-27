@@ -1,0 +1,27 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}Medical workspace{% endblock %}
+{% block page_title %}Medical workspace{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1"><i class="bi bi-lock me-1"></i>Restricted to authorised medical personnel. Every record you open is logged.</p>{% endblock %}
+{% block page_actions %}{% if user|has_perm:"medical.edit" %}<a class="btn btn-accent" href="{% url 'medical:create' %}"><i class="bi bi-file-earmark-medical me-1"></i>New record</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="row g-3">
+<div class="col-xl-9">
+<section class="panel">
+  <div class="panel-head"><form class="filters" method="get" role="search">
+    <div><label class="form-label small" for="mq">Search</label><input id="mq" class="form-control form-control-sm" name="q" value="{{ filter.q.value|default:'' }}" placeholder="Cadet, reference, title"></div>
+    <div><label class="form-label small" for="ms">Status</label><select id="ms" class="form-select form-select-sm" name="status" data-autosubmit>{% for v, l in filter.fields.status.choices %}<option value="{{ v }}"{% if filter.status.value == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="form-label small" for="mf">Fitness</label><select id="mf" class="form-select form-select-sm" name="fitness" data-autosubmit>{% for v, l in filter.fields.fitness.choices %}<option value="{{ v }}"{% if filter.fitness.value == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="form-label small" for="mt">Type</label><select id="mt" class="form-select form-select-sm" name="record_type" data-autosubmit>{% for v, l in filter.fields.record_type.choices %}<option value="{{ v }}"{% if filter.record_type.value == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <button class="btn btn-sm btn-primary" type="submit">Apply</button><a class="btn btn-sm btn-link" href="?">Reset</a>
+  </form></div>
+  {% if page_obj.object_list %}
+  <div class="table-responsive"><table class="table"><thead><tr><th>Reference</th><th>Cadet</th><th>Record</th><th>Date</th><th>Fitness</th><th>Status</th></tr></thead>
+  <tbody>{% for r in page_obj %}<tr><td><a class="fw-medium" href="{% url 'medical:detail' r.pk %}">{{ r.reference }}</a></td><td><a href="{% url 'medical:cadet' r.cadet_id %}">{{ r.cadet.full_name }}</a><div class="small text-muted">{{ r.cadet.cadet_number }}</div></td><td>{{ r.title }}<div class="small text-muted">{{ r.get_record_type_display }}</div></td><td>{{ r.assessment_date|date:"j M Y" }}</td><td>{{ r.get_fitness_status_display }}</td><td>{{ r.get_status_display }}</td></tr>{% endfor %}</tbody></table></div>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-heart-pulse" title="No medical records match" hint="Records appear here for cadets in your assigned units." %}{% endif %}
+</section>
+</div>
+<div class="col-xl-3"><section class="panel"><div class="panel-head"><h2>Follow-ups</h2></div>
+  <ul class="list-group list-group-flush">{% for r in follow_ups %}<li class="list-group-item small"><a href="{% url 'medical:detail' r.pk %}">{{ r.cadet.full_name }}</a><div class="{% if r.follow_up_date < today %}text-danger fw-medium{% else %}text-muted{% endif %}">{% if r.follow_up_date < today %}Overdue since {% else %}Due {% endif %}{{ r.follow_up_date|date:"j M" }}</div></li>{% empty %}<li class="list-group-item small text-muted">No follow-ups pending.</li>{% endfor %}</ul>
+</section></div>
+</div>
+{% endblock %}

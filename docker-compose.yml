@@ -1,0 +1,30 @@
+# Optional: PostgreSQL (and pgAdmin) for local development.
+#   docker compose up -d db          -> database on localhost:5432
+#   docker compose --profile tools up -d   -> also pgAdmin on http://localhost:5050
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cadet_management
+      POSTGRES_USER: cadet_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cadet_user -d cadet_management"]
+      interval: 5s
+      retries: 10
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    profiles: ["tools"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.org
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-change-me}
+    ports:
+      - "127.0.0.1:5050:80"
+    depends_on: [db]
+volumes:
+  pgdata:

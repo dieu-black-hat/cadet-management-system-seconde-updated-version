@@ -1,0 +1,12 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}Medical file{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'medical:list' %}">Medical</a></li><li class="breadcrumb-item active" aria-current="page">{{ cadet.cadet_number }}</li></ol></nav>{% endblock %}
+{% block page_title %}Medical file — {{ cadet.full_name }}{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">{{ cadet.cadet_number }} · {{ cadet.company|default:"" }} {% if cadet.platoon %}/ {{ cadet.platoon.name }}{% endif %}</p>{% endblock %}
+{% block page_actions %}{% if user|has_perm:"medical.edit" %}<a class="btn btn-accent" href="{% url 'medical:create' %}?cadet={{ cadet.pk }}"><i class="bi bi-plus-lg me-1"></i>Add record</a>{% endif %}{% endblock %}
+{% block content %}
+<section class="panel restricted">
+  {% if records %}<div class="table-responsive"><table class="table"><thead><tr><th>Reference</th><th>Record</th><th>Date</th><th>Fitness</th><th>Summary released to command</th><th>Status</th></tr></thead>
+  <tbody>{% for r in records %}<tr><td><a href="{% url 'medical:detail' r.pk %}">{{ r.reference }}</a></td><td>{{ r.title }}<div class="small text-muted">{{ r.get_record_type_display }}</div></td><td>{{ r.assessment_date|date:"j M Y" }}</td><td>{{ r.get_fitness_status_display }}</td><td class="small">{{ r.command_summary|default:"—" }}</td><td>{{ r.get_status_display }}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}{% include "components/empty.html" with icon="bi-file-earmark-medical" title="No medical records for this cadet" %}{% endif %}
+</section>
+{% endblock %}

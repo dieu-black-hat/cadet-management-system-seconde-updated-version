@@ -1,0 +1,43 @@
+{% extends "app_base.html" %}{% load ocms static %}{% block title %}Reports{% endblock %}
+{% block chart_js %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>{% endblock %}
+{% block page_title %}Reports & analytics{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">{{ r.start|date:"j M Y" }} – {{ r.end|date:"j M Y" }}. Figures include only units you are authorised to see; medical data is never included.</p>{% endblock %}
+{% block page_actions %}{% if user|has_perm:"reports.export" %}
+<div class="dropdown"><button class="btn btn-accent dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-download me-1"></i>Export</button>
+<ul class="dropdown-menu dropdown-menu-end">
+  <li><a class="dropdown-item" href="{% url 'reports:summary_pdf' %}{% qs %}"><i class="bi bi-filetype-pdf me-2"></i>Summary (PDF)</a></li>
+  <li><a class="dropdown-item" href="{% url 'reports:statements_csv' %}{% qs %}"><i class="bi bi-filetype-csv me-2"></i>Statements in period (CSV)</a></li>
+  <li><a class="dropdown-item" href="{% url 'reports:assessments_csv' %}"><i class="bi bi-filetype-csv me-2"></i>Current grades (CSV)</a></li>
+</ul></div>{% endif %}{% endblock %}
+{% block content %}
+<section class="panel mb-3"><div class="panel-body py-3">
+  <form class="filters" method="get">
+    <div><label class="form-label small" for="rf">From</label><input id="rf" type="date" class="form-control form-control-sm" name="date_from" value="{{ r.start|date:'Y-m-d' }}"></div>
+    <div><label class="form-label small" for="rt">To</label><input id="rt" type="date" class="form-control form-control-sm" name="date_to" value="{{ r.end|date:'Y-m-d' }}"></div>
+    <button class="btn btn-sm btn-primary" type="submit">Update report</button>
+  </form>
+</div></section>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-2"><div class="stat"><span class="stat-value">{{ r.cadet_total }}</span><span class="stat-label">Cadets in scope</span></div></div>
+  <div class="col-6 col-lg-2"><div class="stat"><span class="stat-value">{{ r.submitted_total }}</span><span class="stat-label">Statements submitted</span></div></div>
+  <div class="col-6 col-lg-2"><div class="stat accent"><span class="stat-value">{{ r.pending }}</span><span class="stat-label">Pending review</span></div></div>
+  <div class="col-6 col-lg-2"><div class="stat"><span class="stat-value">{{ r.returned }}</span><span class="stat-label">Returned</span></div></div>
+  <div class="col-6 col-lg-2"><div class="stat"><span class="stat-value">{% if r.approval_rate is not None %}{{ r.approval_rate }}%{% else %}—{% endif %}</span><span class="stat-label">Approved of decided</span></div></div>
+  <div class="col-6 col-lg-2"><div class="stat"><span class="stat-value">{{ r.turnaround_days|default_if_none:"—" }}</span><span class="stat-label">Avg. days to decision</span></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-8"><section class="panel h-100"><div class="panel-head"><h2>Statements by month of incident</h2></div><div class="panel-body" style="height: 300px"><canvas data-chart="c-monthly" aria-label="Line chart of statements submitted and approved per month" role="img"></canvas></div></section></div>
+  <div class="col-xl-4"><section class="panel h-100"><div class="panel-head"><h2>Workflow status</h2></div><div class="panel-body" style="height: 300px">{% if r.status_counts %}<canvas data-chart="c-status" aria-label="Doughnut chart of statement statuses" role="img"></canvas>{% else %}{% include "components/empty.html" with title="No statements in this period" %}{% endif %}</div></section></div>
+  <div class="col-xl-6"><section class="panel h-100"><div class="panel-head"><h2>Current discipline grades</h2>{% if r.policy %}<span class="small text-muted">Policy v{{ r.policy.version }}</span>{% endif %}</div><div class="panel-body" style="height: 280px">{% if r.grades %}<canvas data-chart="c-grades" aria-label="Bar chart of cadets per grade band" role="img"></canvas>{% else %}{% include "components/empty.html" with title="No active grading policy" %}{% endif %}</div></section></div>
+  <div class="col-xl-6"><section class="panel h-100"><div class="panel-head"><h2>Statements by category</h2></div><div class="panel-body" style="height: 280px">{% if r.by_category %}<canvas data-chart="c-category" aria-label="Bar chart of statements per category" role="img"></canvas>{% else %}{% include "components/empty.html" with title="No statements in this period" %}{% endif %}</div></section></div>
+  <div class="col-xl-6"><section class="panel h-100"><div class="panel-head"><h2>Approved statements by platoon</h2></div><div class="panel-body" style="height: 260px">{% if r.platoons %}<canvas data-chart="c-platoons" aria-label="Bar chart of approved statements per platoon" role="img"></canvas>{% else %}{% include "components/empty.html" with title="No approved statements in this period" %}{% endif %}</div></section></div>
+  <div class="col-xl-6"><section class="panel h-100"><div class="panel-head"><h2>Cadets flagged for human review</h2></div>
+    {% if r.review_flags %}<ul class="list-group list-group-flush">{% for a in r.review_flags %}<li class="list-group-item d-flex justify-content-between"><a href="{% url 'cadets:detail' a.cadet_id %}">{{ a.cadet.full_name }} <span class="text-muted small">{{ a.cadet.cadet_number }}</span></a>{% include "components/grade_inline.html" with label=a.band_label color=a.band_color icon=a.band_icon score=a.score %}</li>{% endfor %}</ul>
+    <div class="panel-body small text-muted border-top">A flag asks the chain of command to review the cadet's record. It is not a sanction.</div>
+    {% else %}<div class="panel-body small text-muted">No cadets are currently flagged.</div>{% endif %}
+  </section></div>
+</div>
+{{ charts.monthly|json_script:"c-monthly" }}{{ charts.status|json_script:"c-status" }}{{ charts.grades|json_script:"c-grades" }}{{ charts.category|json_script:"c-category" }}{{ charts.platoons|json_script:"c-platoons" }}
+{% endblock %}

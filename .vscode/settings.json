@@ -1,0 +1,7 @@
+{
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests"],
+  "files.associations": { "**/templates/**/*.html": "django-html" },
+  "emmet.includeLanguages": { "django-html": "html" },
+  "files.exclude": { "**/__pycache__": true, ".pytest_cache": true }
+}

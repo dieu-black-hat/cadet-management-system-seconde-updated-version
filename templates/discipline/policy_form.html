@@ -1,0 +1,27 @@
+{% extends "app_base.html" %}{% block title %}Edit policy draft{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'discipline:policy_list' %}">Grading policy</a></li><li class="breadcrumb-item active" aria-current="page">Edit v{{ policy.version }}</li></ol></nav>{% endblock %}
+{% block page_title %}Edit draft v{{ policy.version }}{% endblock %}
+{% block content %}
+<form method="post" novalidate>{% csrf_token %}
+<section class="panel mb-3"><div class="panel-head"><h2>General</h2></div><div class="panel-body">{% include "components/form_fields.html" %}</div></section>
+<section class="panel mb-3"><div class="panel-head"><h2>Grade bands</h2><span class="small text-muted">Ranges must not overlap and must cover 0 to the starting score.</span></div><div class="panel-body">
+  {{ bands.management_form }}
+  {% if bands.non_form_errors %}<div class="alert alert-danger">{{ bands.non_form_errors|join:" " }}</div>{% endif %}
+  <div class="table-responsive"><table class="table table-sm align-middle">
+    <thead><tr><th>Label</th><th>Colour</th><th>Icon</th><th>Min</th><th>Max</th><th>Review</th><th>Meaning</th><th>Remove</th></tr></thead>
+    <tbody>{% for f in bands %}<tr>{% for h in f.hidden_fields %}{{ h }}{% endfor %}
+      <td>{{ f.label }}{% for e in f.label.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+      <td style="width:70px">{{ f.color }}</td><td>{{ f.icon }}</td>
+      <td style="width:90px">{{ f.min_score }}</td><td style="width:90px">{{ f.max_score }}{% for e in f.non_field_errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+      <td class="text-center">{{ f.requires_review }}</td><td>{{ f.description }}</td><td class="text-center">{% if f.instance.pk %}{{ f.DELETE }}{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div></section>
+<section class="panel mb-3"><div class="panel-head"><h2>Deductions</h2></div><div class="panel-body">
+  {{ weights.management_form }}
+  <div class="row g-2">{% for f in weights %}{% for h in f.hidden_fields %}{{ h }}{% endfor %}
+    <div class="col-sm-6 col-lg-3"><label class="form-label small">Severity</label>{{ f.severity }}<label class="form-label small mt-1">Points deducted</label>{{ f.points }}{% for e in f.errors.values %}<div class="text-danger small">{{ e|join:" " }}</div>{% endfor %}</div>
+  {% endfor %}</div>
+</div></section>
+<button class="btn btn-primary" type="submit">Save draft</button> <a class="btn btn-link" href="{% url 'discipline:policy_detail' policy.pk %}">Cancel</a>
+</form>
+{% endblock %}

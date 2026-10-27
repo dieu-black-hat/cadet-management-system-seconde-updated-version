@@ -1,0 +1,12 @@
+{% extends "app_base.html" %}{% block title %}{% if is_new %}Register cadet{% else %}Edit cadet{% endif %}{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'cadets:list' %}">Cadets</a></li>{% if not is_new %}<li class="breadcrumb-item"><a href="{% url 'cadets:detail' cadet.pk %}">{{ cadet.cadet_number }}</a></li>{% endif %}<li class="breadcrumb-item active" aria-current="page">{% if is_new %}Register{% else %}Edit{% endif %}</li></ol></nav>{% endblock %}
+{% block page_title %}{% if is_new %}Register a cadet{% else %}Edit {{ cadet.full_name }}{% endif %}{% endblock %}
+{% block content %}
+<section class="panel" style="max-width: 900px"><div class="panel-body">
+  <p class="text-muted small">Fields marked * are required. Collect only what the institution has approved — no medical or disciplinary details here.</p>
+  <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}{% include "components/form_fields.html" %}
+    <div class="mt-4 d-flex gap-2"><button class="btn btn-primary" type="submit">{% if is_new %}Register cadet{% else %}Save changes{% endif %}</button>
+    <a class="btn btn-link" href="{% if is_new %}{% url 'cadets:list' %}{% else %}{% url 'cadets:detail' cadet.pk %}{% endif %}">Cancel</a></div>
+  </form>
+</div></section>
+{% endblock %}

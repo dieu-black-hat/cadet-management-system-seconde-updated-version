@@ -1,0 +1,30 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}Audit trail{% endblock %}
+{% block page_title %}Audit trail{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">Append-only: entries cannot be edited or deleted, by anyone, at application or database level.</p>{% endblock %}
+{% block page_actions %}{% if user|has_perm:"reports.export" %}<a class="btn btn-outline-primary" href="{% url 'audit:export' %}{% qs page='' %}"><i class="bi bi-download me-1"></i>Export filtered CSV</a>{% endif %}{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="panel-head"><form class="filters" method="get">
+    <div><label class="form-label small" for="aa">Actor email</label><input id="aa" class="form-control form-control-sm" name="actor" value="{{ filter.actor.value|default:'' }}"></div>
+    <div><label class="form-label small" for="ae">Event</label><input id="ae" class="form-control form-control-sm" name="event_type" list="event-types" value="{{ filter.event_type.value|default:'' }}"><datalist id="event-types">{% for t in types %}<option value="{{ t }}">{% endfor %}</datalist></div>
+    <div><label class="form-label small" for="ao">Outcome</label><select id="ao" class="form-select form-select-sm" name="outcome" data-autosubmit>{% for v, l in filter.fields.outcome.choices %}<option value="{{ v }}"{% if filter.outcome.value == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="form-label small" for="af">From</label><input id="af" type="date" class="form-control form-control-sm" name="date_from" value="{{ filter.date_from.value|default:'' }}"></div>
+    <div><label class="form-label small" for="at">To</label><input id="at" type="date" class="form-control form-control-sm" name="date_to" value="{{ filter.date_to.value|default:'' }}"></div>
+    <button class="btn btn-sm btn-primary" type="submit">Apply</button><a class="btn btn-sm btn-link" href="?">Reset</a>
+  </form></div>
+  {% if page_obj.object_list %}
+  <div class="table-responsive"><table class="table table-sm small">
+    <thead><tr><th>Time</th><th>Actor</th><th>Event</th><th>Object</th><th>Outcome</th><th>IP</th><th>Details</th></tr></thead>
+    <tbody>{% for e in page_obj %}<tr>
+      <td class="text-nowrap">{{ e.created_at|date:"Y-m-d H:i:s" }}</td>
+      <td>{{ e.actor_email|default:"anonymous" }}<div class="text-muted">{{ e.actor_role|role_label }}</div></td>
+      <td><code>{{ e.event_type }}</code></td><td>{{ e.object_type }} {{ e.object_id }}</td>
+      <td>{% if e.outcome == 'SUCCESS' %}<span class="badge-status st-APPROVED"><i class="bi bi-check2"></i>Success</span>{% elif e.outcome == 'DENIED' %}<span class="badge-status st-REJECTED"><i class="bi bi-shield-x"></i>Denied</span>{% else %}<span class="badge-status st-RETURNED"><i class="bi bi-exclamation-triangle"></i>Failure</span>{% endif %}</td>
+      <td>{{ e.ip_address|default:"" }}</td>
+      <td class="text-muted" style="max-width: 320px">{% for k, v in e.metadata.items %}<div class="text-truncate"><strong>{{ k }}</strong>: {{ v }}</div>{% endfor %}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-shield-check" title="No audit events match" %}{% endif %}
+</section>
+{% endblock %}

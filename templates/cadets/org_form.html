@@ -1,0 +1,10 @@
+{% extends "app_base.html" %}{% block title %}{{ kind|capfirst }}{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'cadets:org' %}">Organisation</a></li><li class="breadcrumb-item active" aria-current="page">{% if instance %}Edit{% else %}New{% endif %} {{ kind }}</li></ol></nav>{% endblock %}
+{% block page_title %}{% if instance %}Edit {{ kind }}{% else %}New {{ kind }}{% endif %}{% endblock %}
+{% block content %}
+<section class="panel" style="max-width: 760px"><div class="panel-body">
+  <p class="small text-muted">Units are deactivated rather than deleted, so historical records stay intact.</p>
+  <form method="post" novalidate>{% csrf_token %}{% include "components/form_fields.html" %}
+  <div class="mt-4"><button class="btn btn-primary" type="submit">Save {{ kind }}</button> <a class="btn btn-link" href="{% url 'cadets:org' %}">Cancel</a></div></form>
+</div></section>
+{% endblock %}

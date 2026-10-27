@@ -1,0 +1,97 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}{{ target.display_name }}{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'accounts:user_list' %}">Users</a></li><li class="breadcrumb-item active" aria-current="page">{{ target.display_name }}</li></ol></nav>{% endblock %}
+{% block page_title %}{{ target.display_name }}{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">{{ target.get_role_display }} · {{ target.email }}</p>{% endblock %}
+{% block page_actions %}
+{% if user|has_perm:"users.manage" %}
+  <a class="btn btn-outline-primary" href="{% url 'accounts:user_edit' target.pk %}"><i class="bi bi-pencil me-1"></i>Edit</a>
+  {% if target.pk != user.pk %}
+    {% if not target.has_usable_password and target.is_active %}
+    <form method="post" action="{% url 'accounts:user_resend_invite' target.pk %}">{% csrf_token %}<button class="btn btn-outline-primary" type="submit"><i class="bi bi-envelope me-1"></i>Resend invitation</button></form>
+    {% endif %}
+    {% if target.is_active %}
+    <form method="post" action="{% url 'accounts:user_set_active' target.pk %}" data-confirm="Deactivate this account? The person is signed out immediately and can no longer sign in." data-confirm-label="Deactivate" data-confirm-style="btn-danger">{% csrf_token %}<input type="hidden" name="active" value="0"><button class="btn btn-outline-danger" type="submit"><i class="bi bi-person-x me-1"></i>Deactivate</button></form>
+    {% else %}
+    <form method="post" action="{% url 'accounts:user_set_active' target.pk %}">{% csrf_token %}<input type="hidden" name="active" value="1"><button class="btn btn-success" type="submit"><i class="bi bi-person-check me-1"></i>Reactivate</button></form>
+    {% endif %}
+  {% endif %}
+{% endif %}
+{% endblock %}
+{% block content %}
+{% if target.is_suspended %}<div class="alert alert-warning"><i class="bi bi-slash-circle me-1"></i>Suspended {{ target.suspended_at|date:"j M Y" }} — {{ target.suspended_reason }}</div>{% endif %}
+<div class="row g-3">
+  <div class="col-lg-6">
+    <section class="panel mb-3"><div class="panel-head"><h2>Account details</h2></div><div class="panel-body">
+      <dl class="kv">
+        <dt>Rank</dt><dd>{{ target.rank|default:"—" }}</dd>
+        <dt>Service number</dt><dd>{{ target.service_number|default:"—" }}</dd>
+        <dt>Phone</dt><dd>{{ target.phone|default:"—" }}</dd>
+        <dt>Status</dt><dd>{% if target.is_suspended %}Suspended{% elif not target.is_active %}Deactivated{% elif not target.has_usable_password %}Invitation pending{% else %}Active{% endif %}</dd>
+        <dt>Created</dt><dd>{{ target.date_joined|date:"j M Y" }}{% if target.created_by %} by {{ target.created_by }}{% endif %}</dd>
+        <dt>Last sign-in</dt><dd>{{ target.last_login|date:"j M Y H:i"|default:"Never" }}</dd>
+      </dl>
+    </div></section>
+
+    <section class="panel mb-3"><div class="panel-head"><h2>Organisational scope</h2></div>
+      <ul class="list-group list-group-flush">
+      {% for a in assignments %}
+        <li class="list-group-item d-flex justify-content-between align-items-center {% if not a.is_active %}text-muted{% endif %}">
+          <span>{{ a.unit_label }}<br><span class="small text-muted">{% if a.is_active %}Since {{ a.assigned_at|date:"j M Y" }}{% else %}Ended {{ a.ended_at|date:"j M Y" }}{% endif %}</span></span>
+          {% if a.is_active and user|has_perm:"org.manage" %}<form method="post" action="{% url 'accounts:user_unassign' target.pk a.pk %}" data-confirm="End this assignment? The user loses access to this unit's records." data-confirm-label="End assignment" data-confirm-style="btn-danger">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">End</button></form>{% endif %}
+        </li>
+      {% empty %}<li class="list-group-item text-muted small">No units assigned — this user cannot see any cadet records yet.</li>{% endfor %}
+      </ul>
+      {% if user|has_perm:"org.manage" %}
+      <div class="panel-body border-top">
+        <form method="post" action="{% url 'accounts:user_assign' target.pk %}">{% csrf_token %}
+          <div class="row g-2 align-items-end">
+            <div class="col-sm-5"><label class="form-label small" for="{{ unit_form.company.id_for_label }}">Company</label>{{ unit_form.company }}</div>
+            <div class="col-sm-5"><label class="form-label small" for="{{ unit_form.platoon.id_for_label }}">or platoon</label>{{ unit_form.platoon }}</div>
+            <div class="col-sm-2"><button class="btn btn-primary w-100" type="submit">Assign</button></div>
+          </div>
+        </form>
+      </div>{% endif %}
+    </section>
+  </div>
+  <div class="col-lg-6">
+    <section class="panel mb-3"><div class="panel-head"><h2>Permissions</h2></div><div class="panel-body">
+      <p class="small text-muted">From role <strong>{{ target.get_role_display }}</strong>:</p>
+      <ul class="small mb-3">{% for p in role_perms %}<li>{{ p }}</li>{% endfor %}</ul>
+      <h3 class="h6">Individually granted</h3>
+      <ul class="list-group mb-3">
+        {% for g in grants %}<li class="list-group-item d-flex justify-content-between align-items-center small {% if not g.is_active %}text-muted{% endif %}">
+          <span><code>{{ g.permission }}</code> — {{ g.reason }}<br>by {{ g.granted_by }} {{ g.granted_at|date:"j M Y" }}{% if g.expires_at %}, expires {{ g.expires_at|date:"j M Y" }}{% endif %}{% if g.revoked_at %}, revoked {{ g.revoked_at|date:"j M Y" }}{% endif %}</span>
+          {% if g.is_active and user|has_perm:"users.manage" %}<form method="post" action="{% url 'accounts:user_revoke' target.pk g.pk %}" data-confirm="Revoke this permission?" data-confirm-label="Revoke" data-confirm-style="btn-danger">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">Revoke</button></form>{% endif %}
+        </li>{% empty %}<li class="list-group-item small text-muted">No additional permissions.</li>{% endfor %}
+      </ul>
+      {% if user|has_perm:"users.manage" %}
+      <form method="post" action="{% url 'accounts:user_grant' target.pk %}" data-confirm="Grant this additional permission? The change is recorded in the audit trail." data-confirm-label="Grant">{% csrf_token %}
+        <div class="row g-2">
+          <div class="col-12"><label class="form-label small" for="{{ grant_form.permission.id_for_label }}">Grant permission</label>{{ grant_form.permission }}</div>
+          <div class="col-md-7"><label class="form-label small" for="{{ grant_form.reason.id_for_label }}">Reason</label>{{ grant_form.reason }}</div>
+          <div class="col-md-5"><label class="form-label small" for="{{ grant_form.expires_at.id_for_label }}">Expires (optional)</label>{{ grant_form.expires_at }}</div>
+          <div class="col-12"><button class="btn btn-outline-primary btn-sm" type="submit">Grant permission</button></div>
+        </div>
+      </form>{% endif %}
+    </div></section>
+
+    {% if user|has_perm:"users.manage" and target.pk != user.pk %}
+    <section class="panel mb-3"><div class="panel-head"><h2>Suspension</h2></div><div class="panel-body">
+      {% if target.is_suspended %}
+        <form method="post" action="{% url 'accounts:user_reinstate' target.pk %}">{% csrf_token %}<button class="btn btn-success" type="submit"><i class="bi bi-arrow-counterclockwise me-1"></i>Reinstate account</button></form>
+      {% else %}
+        <form method="post" action="{% url 'accounts:user_suspend' target.pk %}" data-confirm="Suspend this account? The person is signed out immediately." data-confirm-label="Suspend" data-confirm-style="btn-danger">{% csrf_token %}
+          <label class="form-label small" for="{{ suspend_form.reason.id_for_label }}">Reason (recorded in audit trail)</label>
+          <div class="input-group">{{ suspend_form.reason }}<button class="btn btn-outline-danger" type="submit">Suspend</button></div>
+        </form>
+      {% endif %}
+    </div></section>
+    {% endif %}
+
+    {% if user|has_perm:"audit.view" %}
+    <section class="panel"><div class="panel-head"><h2>Recent activity</h2><a class="small" href="{% url 'audit:list' %}?actor={{ target.email|urlencode }}">Full audit trail</a></div>
+      <ul class="list-group list-group-flush small">{% for e in events %}<li class="list-group-item d-flex justify-content-between"><span><code>{{ e.event_type }}</code> {{ e.object_type }} {{ e.object_id }}</span><span class="text-muted">{{ e.created_at|date:"j M H:i" }}</span></li>{% empty %}<li class="list-group-item text-muted">No activity recorded.</li>{% endfor %}</ul>
+    </section>{% endif %}
+  </div>
+</div>
+{% endblock %}

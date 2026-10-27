@@ -1,0 +1,31 @@
+{% extends "app_base.html" %}{% block title %}Organisation{% endblock %}
+{% block page_title %}Organisation structure{% endblock %}
+{% block page_actions %}
+<a class="btn btn-outline-primary" href="{% url 'cadets:org_create' 'intake' %}"><i class="bi bi-plus-lg me-1"></i>Intake</a>
+<a class="btn btn-outline-primary" href="{% url 'cadets:org_create' 'company' %}"><i class="bi bi-plus-lg me-1"></i>Company</a>
+<a class="btn btn-outline-primary" href="{% url 'cadets:org_create' 'platoon' %}"><i class="bi bi-plus-lg me-1"></i>Platoon</a>
+{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <section class="panel mb-3"><div class="panel-head"><h2>Training intakes</h2></div>
+      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Code</th><th>Name</th><th>Start</th><th class="table-num">Cadets</th><th></th></tr></thead>
+      <tbody>{% for i in intakes %}<tr><td>{{ i.code }}</td><td>{{ i.name }}{% if not i.is_active %} <span class="badge text-bg-light border">inactive</span>{% endif %}</td><td>{{ i.start_date|date:"M Y" }}</td><td class="table-num">{{ i.n }}</td><td><a href="{% url 'cadets:org_edit' 'intake' i.pk %}" aria-label="Edit {{ i.code }}"><i class="bi bi-pencil"></i></a></td></tr>{% empty %}<tr><td colspan="5" class="text-muted">No intakes yet.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+    <section class="panel"><div class="panel-head"><h2>Companies</h2></div>
+      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Code</th><th>Name</th><th class="table-num">Cadets</th><th></th></tr></thead>
+      <tbody>{% for c in companies %}<tr><td>{{ c.code }}</td><td>{{ c.name }}{% if not c.is_active %} <span class="badge text-bg-light border">inactive</span>{% endif %}</td><td class="table-num">{{ c.n }}</td><td><a href="{% url 'cadets:org_edit' 'company' c.pk %}" aria-label="Edit {{ c.code }}"><i class="bi bi-pencil"></i></a></td></tr>{% empty %}<tr><td colspan="4" class="text-muted">No companies yet.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+  </div>
+  <div class="col-lg-7">
+    <section class="panel mb-3"><div class="panel-head"><h2>Platoons</h2></div>
+      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Company</th><th>Code</th><th>Name</th><th class="table-num">Cadets</th><th></th></tr></thead>
+      <tbody>{% for p in platoons %}<tr><td>{{ p.company.code }}</td><td>{{ p.code }}</td><td>{{ p.name }}{% if not p.is_active %} <span class="badge text-bg-light border">inactive</span>{% endif %}</td><td class="table-num">{{ p.n }}</td><td><a href="{% url 'cadets:org_edit' 'platoon' p.pk %}" aria-label="Edit {{ p.name }}"><i class="bi bi-pencil"></i></a></td></tr>{% empty %}<tr><td colspan="5" class="text-muted">No platoons yet.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+    <section class="panel"><div class="panel-head"><h2>Staff assignments</h2><span class="small text-muted">Manage from each user's page</span></div>
+      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Unit</th><th>Staff member</th><th>Role</th></tr></thead>
+      <tbody>{% for a in staff %}<tr><td>{{ a.unit_label }}</td><td><a href="{% url 'accounts:user_detail' a.user_id %}">{{ a.user.display_name }}</a></td><td>{{ a.user.get_role_display }}</td></tr>{% empty %}<tr><td colspan="3" class="text-muted">No staff assigned.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+  </div>
+</div>
+{% endblock %}

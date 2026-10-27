@@ -1,0 +1,28 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}Users & roles{% endblock %}
+{% block page_title %}Users & roles{% endblock %}
+{% block page_actions %}{% if user|has_perm:"users.manage" %}<a class="btn btn-accent" href="{% url 'accounts:user_create' %}"><i class="bi bi-person-plus me-1"></i>Invite user</a>{% endif %}{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="panel-head">
+    <form class="filters" method="get" role="search">
+      <div><label class="form-label small" for="uq">Search</label><input id="uq" class="form-control form-control-sm" name="q" value="{{ filter.q.value|default:'' }}" placeholder="Name, email, service no."></div>
+      <div><label class="form-label small" for="ur">Role</label><select id="ur" class="form-select form-select-sm" name="role" data-autosubmit>{% for v, l in filter.fields.role.choices %}<option value="{{ v }}"{% if filter.role.value == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div><label class="form-label small" for="us">Status</label><select id="us" class="form-select form-select-sm" name="status" data-autosubmit>{% for v, l in filter.fields.status.choices %}<option value="{{ v }}"{% if filter.status.value == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+      <a class="btn btn-sm btn-link" href="{% url 'accounts:user_list' %}">Reset</a>
+    </form>
+  </div>
+  {% if page_obj.object_list %}
+  <div class="table-responsive"><table class="table">
+    <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Service no.</th><th scope="col">Status</th><th scope="col">Last sign-in</th></tr></thead>
+    <tbody>{% for u in page_obj %}<tr>
+      <td><a href="{% url 'accounts:user_detail' u.pk %}" class="fw-medium">{{ u.display_name }}</a></td>
+      <td>{{ u.email }}</td><td>{{ u.get_role_display }}</td><td>{{ u.service_number|default:"—" }}</td>
+      <td>{% if u.is_suspended %}<span class="badge-status st-REJECTED"><i class="bi bi-slash-circle"></i>Suspended</span>{% elif not u.is_active %}<span class="badge-status st-WITHDRAWN"><i class="bi bi-person-x"></i>Deactivated</span>{% elif not u.has_usable_password %}<span class="badge-status st-SUBMITTED"><i class="bi bi-envelope"></i>Invited</span>{% else %}<span class="badge-status st-APPROVED"><i class="bi bi-check2"></i>Active</span>{% endif %}</td>
+      <td class="small text-muted">{{ u.last_login|date:"j M Y H:i"|default:"Never" }}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-people" title="No users match these filters" hint="Clear the filters or invite a new user." %}{% endif %}
+</section>
+{% endblock %}

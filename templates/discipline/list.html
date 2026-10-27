@@ -1,0 +1,47 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_actions %}{% if user|has_perm:"statements.create" %}<a class="btn btn-accent" href="{% url 'discipline:create' %}"><i class="bi bi-journal-plus me-1"></i>New statement</a>{% endif %}{% endblock %}
+{% block content %}
+{% if counts %}
+<div class="row g-2 mb-3">
+  {% with c=counts %}
+  <div class="col-6 col-md-2"><a class="stat" href="?status=DRAFT"><span class="stat-value">{{ c.DRAFT }}</span><span class="stat-label">Drafts</span></a></div>
+  <div class="col-6 col-md-2"><a class="stat alert-tone" href="?status=RETURNED"><span class="stat-value">{{ c.RETURNED }}</span><span class="stat-label">Returned to you</span></a></div>
+  <div class="col-6 col-md-2"><a class="stat" href="?status=SUBMITTED"><span class="stat-value">{{ c.SUBMITTED }}</span><span class="stat-label">At platoon</span></a></div>
+  <div class="col-6 col-md-2"><a class="stat" href="?status=COMPANY_REVIEW"><span class="stat-value">{{ c.COMPANY_REVIEW }}</span><span class="stat-label">At company</span></a></div>
+  <div class="col-6 col-md-2"><a class="stat accent" href="?status=APPROVED"><span class="stat-value">{{ c.APPROVED }}</span><span class="stat-label">Approved</span></a></div>
+  <div class="col-6 col-md-2"><a class="stat" href="?status=REJECTED"><span class="stat-value">{{ c.REJECTED }}</span><span class="stat-label">Rejected</span></a></div>
+  {% endwith %}
+</div>
+{% endif %}
+<section class="panel">
+  <div class="panel-head">
+    <form class="filters" method="get" role="search">
+      <div><label class="form-label small" for="sq">Search</label><input id="sq" class="form-control form-control-sm" name="q" value="{{ filter.q.value|default:'' }}" placeholder="Reference, title, cadet"></div>
+      <div><label class="form-label small" for="ss">Status</label><select id="ss" class="form-select form-select-sm" name="status" data-autosubmit>{% for v, l in filter.fields.status.choices %}<option value="{{ v }}"{% if filter.status.value == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div><label class="form-label small" for="sc">Category</label><select id="sc" class="form-select form-select-sm" name="category" data-autosubmit>{% for v, l in filter.fields.category.choices %}<option value="{{ v }}"{% if filter.category.value|stringformat:'s' == v|stringformat:'s' %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div><label class="form-label small" for="sv">Severity</label><select id="sv" class="form-select form-select-sm" name="severity" data-autosubmit>{% for v, l in filter.fields.severity.choices %}<option value="{{ v }}"{% if filter.severity.value == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div><label class="form-label small" for="df">From</label><input id="df" type="date" class="form-control form-control-sm" name="date_from" value="{{ filter.date_from.value|default:'' }}"></div>
+      <div><label class="form-label small" for="dt">To</label><input id="dt" type="date" class="form-control form-control-sm" name="date_to" value="{{ filter.date_to.value|default:'' }}"></div>
+      <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+      <a class="btn btn-sm btn-link" href="?">Reset</a>
+    </form>
+  </div>
+  {% if filter.non_field_errors %}<div class="alert alert-danger m-3">{{ filter.non_field_errors|join:" " }}</div>{% endif %}
+  {% if page_obj.object_list %}
+  <div class="table-responsive"><table class="table">
+    <thead><tr><th scope="col">Reference</th><th scope="col">Cadet</th><th scope="col">Incident</th><th scope="col">Severity</th><th scope="col">Status</th><th scope="col">Next action</th>{% if mode == 'all' %}<th scope="col">Reported by</th>{% endif %}</tr></thead>
+    <tbody>{% for s in page_obj %}<tr>
+      <td><a class="fw-medium" href="{% url 'discipline:detail' s.pk %}">{{ s.reference }}</a></td>
+      <td>{{ s.cadet.full_name }}<div class="small text-muted">{{ s.cadet.cadet_number }}</div></td>
+      <td>{{ s.title|truncatechars:48 }}<div class="small text-muted">{{ s.category }} · {{ s.incident_at|date:"j M Y" }}</div></td>
+      <td class="sev-{{ s.severity }}">{{ s.get_severity_display }}</td>
+      <td>{% status_badge s %}</td>
+      <td class="small">{{ s.next_action_label }}</td>
+      {% if mode == 'all' %}<td class="small">{{ s.submitted_by.display_name }}</td>{% endif %}
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-journal" title="No statements here" hint="Adjust the filters, or create a new statement." %}{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "dashboards/_base.html" %}{% load ocms %}
+{% block page_actions %}<a class="btn btn-accent" href="{% url 'audit:list' %}"><i class="bi bi-shield-check me-1"></i>Open audit trail</a>{% endblock %}
+{% block content %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-xl-3"><a class="stat" href="{% url 'audit:list' %}"><span class="stat-value">{{ events_24h }}</span><span class="stat-label">Events (24 h)</span></a></div>
+  <div class="col-6 col-xl-3"><a class="stat alert-tone" href="{% url 'audit:list' %}?outcome=DENIED"><span class="stat-value">{{ denied_7d }}</span><span class="stat-label">Access denials (7 days)</span></a></div>
+  <div class="col-6 col-xl-3"><a class="stat" href="{% url 'audit:list' %}?event_type=auth.login_failed"><span class="stat-value">{{ failed_logins }}</span><span class="stat-label">Failed sign-ins (24 h)</span></a></div>
+  <div class="col-6 col-xl-3"><a class="stat accent" href="{% url 'audit:list' %}?event_type=export."><span class="stat-value">{{ exports_7d }}</span><span class="stat-label">Exports (7 days)</span></a></div>
+</div>
+<section class="panel"><div class="panel-head"><h2>Recent denials and failures</h2></div>
+  <ul class="list-group list-group-flush small">{% for e in recent_denied %}<li class="list-group-item d-flex justify-content-between"><span><code>{{ e.event_type }}</code> {{ e.actor_email|default:"anonymous" }} — {{ e.metadata.reason|default:e.metadata.path|default:"" }}</span><span class="text-muted">{{ e.created_at|date:"j M H:i" }}</span></li>{% empty %}<li class="list-group-item text-muted">None recorded.</li>{% endfor %}</ul>
+</section>
+{% endblock %}

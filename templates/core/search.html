@@ -1,0 +1,14 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}Search{% endblock %}
+{% block page_title %}Search{% if q %}: “{{ q }}”{% endif %}{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">Results are limited to records you are authorised to see. Medical records are never included in search.</p>{% endblock %}
+{% block content %}
+{% if q|length < 2 %}<div class="alert alert-info">Type at least two characters in the search box.</div>{% else %}
+<div class="row g-3">
+  <div class="col-lg-6"><section class="panel"><div class="panel-head"><h2>Cadets</h2><span class="small text-muted">{{ cadets|length }}</span></div>
+    {% if cadets %}<ul class="list-group list-group-flush">{% for c in cadets %}<li class="list-group-item"><a href="{% url 'cadets:detail' c.pk %}">{{ c.full_name }}</a> <span class="small text-muted">{{ c.cadet_number }} · {{ c.company|default:"" }}</span></li>{% endfor %}</ul>
+    {% else %}{% include "components/empty.html" with icon="bi-person" title="No cadets found" %}{% endif %}</section></div>
+  <div class="col-lg-6"><section class="panel"><div class="panel-head"><h2>Statements</h2><span class="small text-muted">{{ statements|length }}</span></div>
+    {% if statements %}<ul class="list-group list-group-flush">{% for s in statements %}<li class="list-group-item d-flex justify-content-between"><span><a href="{% url 'discipline:detail' s.pk %}">{{ s.reference }}</a> {{ s.title|truncatechars:40 }}</span>{% status_badge s %}</li>{% endfor %}</ul>
+    {% else %}{% include "components/empty.html" with icon="bi-journal" title="No statements found" %}{% endif %}</section></div>
+</div>{% endif %}
+{% endblock %}

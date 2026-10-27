@@ -1,0 +1,30 @@
+{% extends "dashboards/_base.html" %}{% load ocms %}
+{% block page_actions %}<a class="btn btn-accent" href="{% url 'discipline:queue' %}"><i class="bi bi-inbox me-1"></i>Review queue{% if queue_count %} ({{ queue_count }}){% endif %}</a>{% endblock %}
+{% block content %}
+<p class="text-muted small mb-3"><i class="bi bi-diagram-3 me-1"></i>Your units: {% for u in units %}{{ u }}{% if not forloop.last %}, {% endif %}{% empty %}none assigned — ask the administrator to assign your unit.{% endfor %}</p>
+<div class="row g-3 mb-3">
+  <div class="col-6 col-xl"><a class="stat" href="{% url 'cadets:list' %}"><span class="stat-value">{{ cadet_count }}</span><span class="stat-label">Cadets</span></a></div>
+  <div class="col-6 col-xl"><a class="stat accent" href="{% url 'discipline:queue' %}"><span class="stat-value">{{ queue_count }}</span><span class="stat-label">Awaiting your decision</span>{% if overdue %}<span class="stat-note text-danger">{{ overdue }} overdue</span>{% endif %}</a></div>
+  <div class="col-6 col-xl"><a class="stat" href="{% url 'discipline:list' %}?status=APPROVED"><span class="stat-value">{{ counts.APPROVED|default:0 }}</span><span class="stat-label">Approved</span></a></div>
+  <div class="col-6 col-xl"><a class="stat" href="{% url 'discipline:list' %}?status=REJECTED"><span class="stat-value">{{ counts.REJECTED|default:0 }}</span><span class="stat-label">Rejected</span></a></div>
+  <div class="col-6 col-xl"><div class="stat"><span class="stat-value">{{ turnaround|default_if_none:"—" }}</span><span class="stat-label">Avg. days to decision</span></div></div>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-xl-7"><section class="panel h-100"><div class="panel-head"><h2>Awaiting your decision</h2><a class="small" href="{% url 'discipline:queue' %}">Full queue</a></div>
+    {% if queue %}<div class="table-responsive"><table class="table"><thead><tr><th>Reference</th><th>Cadet</th><th>Severity</th><th>Waiting</th><th></th></tr></thead><tbody>
+    {% for s in queue %}<tr><td><a href="{% url 'discipline:detail' s.pk %}">{{ s.reference }}</a><div class="small text-muted">{{ s.title|truncatechars:34 }}</div></td><td>{{ s.cadet.full_name }}</td><td class="sev-{{ s.severity }}">{{ s.get_severity_display }}</td><td class="small">{{ s.last_transition_at|timesince }}</td><td><a class="btn btn-sm btn-primary" href="{% url 'discipline:detail' s.pk %}">Review</a></td></tr>{% endfor %}
+    </tbody></table></div>{% else %}{% include "components/empty.html" with icon="bi-inbox" title="Nothing waiting for you" %}{% endif %}
+  </section></div>
+  <div class="col-xl-5"><section class="panel h-100"><div class="panel-head"><h2>Discipline grades in your units</h2></div><div class="panel-body" style="height:260px">{% if chart_grades %}<canvas data-chart="ch-grades" role="img" aria-label="Cadets per grade band"></canvas>{% else %}{% include "components/empty.html" with title="No active grading policy" %}{% endif %}</div></section></div>
+</div>
+<div class="row g-3">
+  <div class="col-xl-{% if chart_platoons %}4{% else %}6{% endif %}"><section class="panel h-100"><div class="panel-head"><h2>Statements per month</h2></div><div class="panel-body" style="height:240px"><canvas data-chart="ch-trend" role="img" aria-label="Statements per month"></canvas></div></section></div>
+  {% if chart_platoons %}<div class="col-xl-4"><section class="panel h-100"><div class="panel-head"><h2>Platoon comparison</h2></div><div class="panel-body" style="height:240px"><canvas data-chart="ch-platoons" role="img" aria-label="Approved and pending statements per platoon"></canvas></div></section></div>{% endif %}
+  <div class="col-xl-{% if chart_platoons %}4{% else %}6{% endif %}"><section class="panel h-100"><div class="panel-head"><h2>Flagged for human review</h2></div>
+    {% if flagged %}<ul class="list-group list-group-flush">{% for a in flagged %}<li class="list-group-item d-flex justify-content-between"><a href="{% url 'cadets:detail' a.cadet_id %}">{{ a.cadet.full_name }}</a>{% include "components/grade_inline.html" with label=a.band_label color=a.band_color icon=a.band_icon score=a.score %}</li>{% endfor %}</ul>
+    <div class="panel-body small text-muted border-top">A prompt for review — never an automatic sanction.</div>{% else %}<div class="panel-body small text-muted">No cadets flagged.</div>{% endif %}
+  </section></div>
+</div>
+{% if recent_decisions %}<section class="panel mt-3"><div class="panel-head"><h2>Your recent decisions</h2></div><ul class="list-group list-group-flush">{% for s in recent_decisions %}<li class="list-group-item d-flex justify-content-between"><span><a href="{% url 'discipline:detail' s.pk %}">{{ s.reference }}</a> — {{ s.cadet.full_name }}</span>{% status_badge s %}</li>{% endfor %}</ul></section>{% endif %}
+{{ chart_grades|json_script:"ch-grades" }}{{ chart_trend|json_script:"ch-trend" }}{% if chart_platoons %}{{ chart_platoons|json_script:"ch-platoons" }}{% endif %}
+{% endblock %}

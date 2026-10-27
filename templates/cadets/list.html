@@ -1,0 +1,55 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}Cadet directory{% endblock %}
+{% block page_title %}Cadet directory{% if show_archived %} <span class="badge text-bg-secondary fs-6 align-middle">Archived</span>{% endif %}{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">{{ page_obj.paginator.count }} cadet{{ page_obj.paginator.count|pluralize }} in your scope</p>{% endblock %}
+{% block page_actions %}
+  <div class="btn-group" role="group" aria-label="View">
+    <a class="btn btn-outline-primary{% if view_mode == 'list' %} active{% endif %}" href="{% qs view='list' page='' %}" {% if view_mode == 'list' %}aria-current="true"{% endif %}><i class="bi bi-list-ul"></i><span class="visually-hidden">List view</span></a>
+    <a class="btn btn-outline-primary{% if view_mode == 'grid' %} active{% endif %}" href="{% qs view='grid' page='' %}" {% if view_mode == 'grid' %}aria-current="true"{% endif %}><i class="bi bi-grid-3x3-gap"></i><span class="visually-hidden">Grid view</span></a>
+  </div>
+  {% if user|has_perm:"cadets.export" %}<a class="btn btn-outline-primary" href="{% url 'cadets:export' %}"><i class="bi bi-download me-1"></i>Export CSV</a>{% endif %}
+  {% if user|has_perm:"cadets.create" %}<a class="btn btn-accent" href="{% url 'cadets:create' %}"><i class="bi bi-person-plus me-1"></i>Register cadet</a>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="panel mb-3"><div class="panel-body py-3">
+  <form class="filters" method="get" role="search">
+    <input type="hidden" name="view" value="{{ view_mode }}">
+    <div><label class="form-label small" for="fq">Search</label><input id="fq" class="form-control form-control-sm" name="q" value="{{ filter.q.value|default:'' }}" placeholder="Name or cadet number"></div>
+    <div><label class="form-label small" for="fi">Intake</label><select id="fi" name="intake" class="form-select form-select-sm" data-autosubmit>{% for v, l in filter.fields.intake.choices %}<option value="{{ v }}"{% if filter.intake.value|stringformat:'s' == v|stringformat:'s' %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="form-label small" for="fc">Company</label><select id="fc" name="company" class="form-select form-select-sm" data-autosubmit>{% for v, l in filter.fields.company.choices %}<option value="{{ v }}"{% if filter.company.value|stringformat:'s' == v|stringformat:'s' %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="form-label small" for="fp">Platoon</label><select id="fp" name="platoon" class="form-select form-select-sm" data-autosubmit>{% for v, l in filter.fields.platoon.choices %}<option value="{{ v }}"{% if filter.platoon.value|stringformat:'s' == v|stringformat:'s' %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="form-label small" for="fs">Status</label><select id="fs" name="status" class="form-select form-select-sm" data-autosubmit>{% for v, l in filter.fields.status.choices %}<option value="{{ v }}"{% if filter.status.value == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="form-label small" for="fo">Sort by</label><select id="fo" name="sort" class="form-select form-select-sm" data-autosubmit>{% for v, l in filter.fields.sort.choices %}<option value="{{ v }}"{% if filter.sort.value == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+    <a class="btn btn-sm btn-link" href="{% url 'cadets:list' %}?view={{ view_mode }}">Reset</a>
+    {% if user|has_perm:"cadets.edit" %}<a class="btn btn-sm btn-link ms-auto" href="{% if show_archived %}{% qs archived='' page='' %}{% else %}{% qs archived='1' page='' %}{% endif %}">{% if show_archived %}Show active records{% else %}Show archived{% endif %}</a>{% endif %}
+  </form>
+  {% if policy %}<div class="mt-3 pt-3 border-top">{% include "components/legend.html" %}</div>{% endif %}
+</div></section>
+
+{% if not page_obj.object_list %}
+  <section class="panel">{% include "components/empty.html" with icon="bi-people" title="No cadets match these filters" hint="Change or reset the filters. Only cadets in your assigned company or platoon are listed." %}</section>
+{% elif view_mode == 'grid' %}
+  <div class="row g-3">
+  {% for c in page_obj %}
+    <div class="col-sm-6 col-lg-4 col-xxl-3"><article class="cadet-card">
+      <div class="d-flex align-items-center gap-3">
+        {% if c.photo %}<img class="photo" src="{% url 'cadets:photo' c.pk %}" alt="Photo of {{ c.full_name }}" loading="lazy">{% else %}<span class="photo" aria-hidden="true">{{ c.initials }}</span>{% endif %}
+        <div class="min-w-0"><h2 class="h6 mb-0 text-truncate"><a href="{% url 'cadets:detail' c.pk %}">{{ c.full_name }}</a></h2><div class="small text-muted">{{ c.cadet_number }}</div></div>
+      </div>
+      <dl><dt>Company</dt><dd>{{ c.company.name|default:"—" }}</dd><dt>Platoon</dt><dd>{{ c.platoon.name|default:"—" }}</dd><dt>Intake</dt><dd>{{ c.intake.code }}</dd><dt>Status</dt><dd>{{ c.get_status_display }}</dd></dl>
+      <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">{% include "components/grade_inline.html" with label=c.grade_label color=c.grade_color icon=c.grade_icon score=c.grade_score %}<a class="btn btn-sm btn-outline-primary" href="{% url 'cadets:detail' c.pk %}">Open</a></div>
+    </article></div>
+  {% endfor %}
+  </div>
+  <div class="panel mt-3">{% include "components/pagination.html" %}</div>
+{% else %}
+  <section class="panel"><div class="table-responsive"><table class="table">
+    <thead><tr><th scope="col">Cadet</th><th scope="col">Number</th><th scope="col">Company</th><th scope="col">Platoon</th><th scope="col">Intake</th><th scope="col">Status</th><th scope="col">Discipline grade</th></tr></thead>
+    <tbody>{% for c in page_obj %}<tr>
+      <td><div class="d-flex align-items-center gap-2">{% if c.photo %}<img class="photo" style="width:32px;height:32px;border-radius:50%;object-fit:cover" src="{% url 'cadets:photo' c.pk %}" alt="" loading="lazy">{% else %}<span class="avatar" style="width:32px;height:32px;background:#e3e8f0;color:#13294b" aria-hidden="true">{{ c.initials }}</span>{% endif %}<a class="fw-medium" href="{% url 'cadets:detail' c.pk %}">{{ c.full_name }}</a></div></td>
+      <td>{{ c.cadet_number }}</td><td>{{ c.company.name|default:"—" }}</td><td>{{ c.platoon.name|default:"—" }}</td><td>{{ c.intake.code }}</td><td>{{ c.get_status_display }}</td>
+      <td>{% include "components/grade_inline.html" with label=c.grade_label color=c.grade_color icon=c.grade_icon score=c.grade_score %}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>{% include "components/pagination.html" %}</section>
+{% endif %}
+{% endblock %}

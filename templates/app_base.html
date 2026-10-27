@@ -1,0 +1,71 @@
+{% extends "base.html" %}{% load static %}
+{% block body %}
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <a class="brand" href="{% url 'core:dashboard' %}">
+      <span class="crest" aria-hidden="true">OC</span>
+      <span><span class="brand-title d-block">Cadet Management</span><span class="brand-sub">{{ INSTITUTION_NAME }}</span></span>
+    </a>
+    <nav>
+      {% for section in nav_sections %}
+      <div class="nav-section">
+        <div class="nav-section-title">{{ section.title }}</div>
+        {% for item in section.items %}
+        <a class="nav-link{% if item.name == current_url_name %} active{% endif %}" href="{{ item.url }}"{% if item.name == current_url_name %} aria-current="page"{% endif %}><i class="bi {{ item.icon }}" aria-hidden="true"></i>{{ item.label }}</a>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-footer">Signed in as {{ request.user.get_role_display }}</div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn d-lg-none" type="button" data-toggle-sidebar aria-controls="sidebar" aria-expanded="false" aria-label="Open navigation"><i class="bi bi-list"></i></button>
+      <form class="search position-relative" action="{% url 'core:search' %}" method="get" role="search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <label class="visually-hidden" for="global-search">Search cadets and statements</label>
+        <input id="global-search" class="form-control" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search cadets or statement reference" maxlength="80">
+      </form>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <div class="dropdown">
+          <button class="icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications, {{ unread_notifications }} unread">
+            <i class="bi bi-bell"></i>{% if unread_notifications %}<span class="count">{{ unread_notifications }}</span>{% endif %}
+          </button>
+          <div class="dropdown-menu dropdown-menu-end p-0" style="width: 340px">
+            <div class="px-3 py-2 border-bottom d-flex justify-content-between"><strong>Notifications</strong><a class="small" href="{% url 'notifications:list' %}">View all</a></div>
+            {% for n in recent_notifications %}
+              <a class="dropdown-item py-2 small text-wrap{% if not n.is_read %} notif-unread{% endif %}" href="{% url 'notifications:open' n.pk %}">{{ n.title }}<br><span class="text-muted">{{ n.created_at|timesince }} ago</span></a>
+            {% empty %}<div class="px-3 py-3 small text-muted">You're all caught up.</div>{% endfor %}
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-link text-decoration-none d-flex align-items-center gap-2 p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="avatar">{{ request.user.first_name|slice:":1" }}{{ request.user.last_name|slice:":1" }}</span>
+            <span class="d-none d-md-inline text-start lh-sm"><span class="d-block small fw-semibold text-dark">{{ request.user.display_name }}</span><span class="d-block small text-muted">{{ request.user.get_role_display }}</span></span>
+            <i class="bi bi-chevron-down small text-muted"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i>My profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}"><i class="bi bi-key me-2"></i>Change password</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="dropdown-item" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Sign out</button></form></li>
+          </ul>
+        </div>
+      </div>
+    </header>
+    {% if SYNTHETIC_DATA_BANNER %}<div class="synthetic-banner"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>Demonstration environment — all cadet, staff and medical records are synthetic.</div>{% endif %}
+    <main id="main" class="content" tabindex="-1">
+      <div class="page-head">
+        <div>
+          {% block breadcrumbs %}{% endblock %}
+          <h1>{% block page_title %}{% endblock %}</h1>
+          {% block page_subtitle %}{% endblock %}
+        </div>
+        <div class="d-flex flex-wrap gap-2">{% block page_actions %}{% endblock %}</div>
+      </div>
+      {% include "components/messages.html" %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

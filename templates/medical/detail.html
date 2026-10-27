@@ -1,0 +1,28 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}{{ r.reference }}{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'medical:list' %}">Medical</a></li><li class="breadcrumb-item"><a href="{% url 'medical:cadet' r.cadet_id %}">{{ r.cadet.cadet_number }}</a></li><li class="breadcrumb-item active" aria-current="page">{{ r.reference }}</li></ol></nav>{% endblock %}
+{% block page_title %}{{ r.title }}{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">{{ r.reference }} · {{ r.cadet.full_name }} · {{ r.get_record_type_display }}</p>{% endblock %}
+{% block page_actions %}{% if user|has_perm:"medical.edit" %}<a class="btn btn-outline-primary" href="{% url 'medical:edit' r.pk %}"><i class="bi bi-pencil me-1"></i>Update record</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="alert alert-danger small py-2"><i class="bi bi-shield-lock me-1"></i>Confidential medical information. Do not copy into statements, e-mails or reports.</div>
+<div class="row g-3">
+  <div class="col-lg-8">
+    <section class="panel mb-3 restricted"><div class="panel-head"><h2>Clinical record</h2></div><div class="panel-body">
+      <dl class="kv mb-3"><dt>Assessment date</dt><dd>{{ r.assessment_date|date:"j F Y" }}</dd><dt>Fitness</dt><dd class="fw-medium">{{ r.get_fitness_status_display }}</dd><dt>Status</dt><dd>{{ r.get_status_display }}{% if r.follow_up_date %} — follow-up {{ r.follow_up_date|date:"j M Y" }}{% endif %}</dd><dt>Recorded by</dt><dd>{{ r.created_by.display_name }}, {{ r.created_at|date:"j M Y" }}</dd></dl>
+      <h3 class="h6">Clinical notes</h3><p>{{ r.clinical_notes|linebreaksbr }}</p>
+    </div></section>
+    <section class="panel mb-3"><div class="panel-head"><h2>Released to command</h2></div><div class="panel-body">
+      <p class="mb-1"><strong>{{ r.get_fitness_status_display }}</strong></p><p class="mb-0 small">{{ r.command_summary|default:"No summary released." }}</p>
+      <p class="small text-muted mt-2 mb-0">This is the only part of the record commanders can see.</p>
+    </div></section>
+    <section class="panel"><div class="panel-head"><h2>Documents</h2></div>
+      {% if attachments %}<ul class="list-group list-group-flush">{% for a in attachments %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="bi bi-file-earmark-lock me-1"></i>{{ a.original_name }} <span class="small text-muted">{{ a.size|filesizeformat }}</span></span><a class="btn btn-sm btn-outline-primary" href="{% url 'medical:attachment_download' r.pk a.pk %}">Download</a></li>{% endfor %}</ul>
+      {% else %}<div class="panel-body small text-muted">No documents.</div>{% endif %}
+      {% if user|has_perm:"medical.edit" %}<div class="panel-body border-top"><form method="post" enctype="multipart/form-data" action="{% url 'medical:attachment_upload' r.pk %}" class="d-flex flex-wrap gap-2 align-items-end">{% csrf_token %}<div class="flex-grow-1"><label class="form-label small" for="{{ att_form.file.id_for_label }}">Upload document</label>{{ att_form.file }}<div class="form-text">{{ att_form.file.help_text }}</div></div><button class="btn btn-outline-primary" type="submit">Upload</button></form></div>{% endif %}
+    </section>
+  </div>
+  <div class="col-lg-4"><section class="panel"><div class="panel-head"><h2>Update history</h2></div><div class="panel-body">
+    <ul class="timeline">{% for v in revisions %}<li><div class="small fw-medium">Changed: {{ v.changed_fields|join:", " }}</div><div class="t-meta">{{ v.changed_at|date:"j M Y H:i" }} by {{ v.changed_by.display_name }}</div></li>{% empty %}<li class="small text-muted">No updates since creation.</li>{% endfor %}</ul>
+  </div></section></div>
+</div>
+{% endblock %}

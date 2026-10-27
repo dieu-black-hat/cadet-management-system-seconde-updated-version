@@ -1,0 +1,31 @@
+{% extends "dashboards/_base.html" %}{% load ocms %}
+{% block page_actions %}<a class="btn btn-outline-primary" href="{% url 'accounts:user_create' %}"><i class="bi bi-person-plus me-1"></i>Invite user</a><a class="btn btn-accent" href="{% url 'cadets:create' %}"><i class="bi bi-person-plus-fill me-1"></i>Register cadet</a>{% endblock %}
+{% block content %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-xl-2"><a class="stat" href="{% url 'cadets:list' %}?status=ACTIVE"><span class="stat-value">{{ active_cadets }}</span><span class="stat-label">Active cadets</span></a></div>
+  <div class="col-6 col-xl-2"><a class="stat" href="{% url 'accounts:user_list' %}?status=active"><span class="stat-value">{{ active_users }}</span><span class="stat-label">Active accounts</span><span class="stat-note">{{ inactive_users }} inactive or suspended</span></a></div>
+  <div class="col-6 col-xl-2"><a class="stat accent" href="{% url 'discipline:list' %}?status=SUBMITTED"><span class="stat-value">{{ pending }}</span><span class="stat-label">Pending reviews</span>{% if overdue %}<span class="stat-note text-danger">{{ overdue }} overdue</span>{% endif %}</a></div>
+  <div class="col-6 col-xl-2"><a class="stat" href="{% url 'discipline:list' %}?status=APPROVED"><span class="stat-value">{{ approved }}</span><span class="stat-label">Approved statements</span></a></div>
+  <div class="col-6 col-xl-2"><a class="stat" href="{% url 'discipline:list' %}?status=REJECTED"><span class="stat-value">{{ rejected }}</span><span class="stat-label">Rejected statements</span></a></div>
+  <div class="col-6 col-xl-2"><a class="stat{% if failed_logins or denied_events %} alert-tone{% endif %}" href="{% url 'audit:list' %}?outcome=DENIED"><span class="stat-value">{{ failed_logins }}</span><span class="stat-label">Failed sign-ins (24 h)</span><span class="stat-note">{{ denied_events }} access denials (7 days)</span></a></div>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-xl-5"><section class="panel h-100"><div class="panel-head"><h2>Cadets by company</h2></div><div class="panel-body" style="height:260px"><canvas data-chart="ch-company" role="img" aria-label="Bar chart of cadets per company"></canvas></div></section></div>
+  <div class="col-xl-3"><section class="panel h-100"><div class="panel-head"><h2>By intake</h2></div><div class="panel-body" style="height:260px"><canvas data-chart="ch-intake" role="img" aria-label="Cadets per intake"></canvas></div></section></div>
+  <div class="col-xl-4"><section class="panel h-100"><div class="panel-head"><h2>Discipline grades</h2><a class="small" href="{% url 'discipline:policy_list' %}">Policy</a></div><div class="panel-body" style="height:260px">{% if chart_grades %}<canvas data-chart="ch-grades" role="img" aria-label="Cadets per grade band"></canvas>{% else %}{% include "components/empty.html" with title="No active policy" %}{% endif %}</div></section></div>
+</div>
+<div class="row g-3">
+  <div class="col-xl-4"><section class="panel h-100"><div class="panel-head"><h2>Statements per month</h2></div><div class="panel-body" style="height:240px"><canvas data-chart="ch-trend" role="img" aria-label="Statements per month"></canvas></div></section></div>
+  <div class="col-xl-3"><section class="panel h-100"><div class="panel-head"><h2>Organisation</h2><a class="small" href="{% url 'cadets:org' %}">Manage</a></div>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item d-flex justify-content-between"><span>Active intakes</span><strong>{{ org_counts.intakes }}</strong></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Companies</span><strong>{{ org_counts.companies }}</strong></li>
+      <li class="list-group-item d-flex justify-content-between"><span>Platoons</span><strong>{{ org_counts.platoons }}</strong></li>
+      {% for label, n in staff_by_role %}<li class="list-group-item d-flex justify-content-between small"><span>{{ label }}</span><span>{{ n }}</span></li>{% endfor %}
+    </ul></section></div>
+  <div class="col-xl-5"><section class="panel h-100"><div class="panel-head"><h2>Recent activity</h2><a class="small" href="{% url 'audit:list' %}">Audit trail</a></div>
+    <ul class="list-group list-group-flush small">{% for e in recent_activity %}<li class="list-group-item d-flex justify-content-between gap-2"><span><code>{{ e.event_type }}</code> <span class="text-muted">{{ e.actor_email|default:"anonymous" }}</span></span><span class="text-muted text-nowrap">{{ e.created_at|timesince }} ago</span></li>{% empty %}<li class="list-group-item text-muted">No activity yet.</li>{% endfor %}</ul>
+  </section></div>
+</div>
+{{ chart_company|json_script:"ch-company" }}{{ chart_intake|json_script:"ch-intake" }}{{ chart_grades|json_script:"ch-grades" }}{{ chart_trend|json_script:"ch-trend" }}
+{% endblock %}

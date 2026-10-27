@@ -1,0 +1,75 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}{{ s.reference }}{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'discipline:list' %}">Statements</a></li><li class="breadcrumb-item active" aria-current="page">{{ s.reference }}</li></ol></nav>{% endblock %}
+{% block page_title %}{{ s.title }}{% endblock %}
+{% block page_subtitle %}<div class="d-flex flex-wrap align-items-center gap-2 mt-2">{% status_badge s %}<span class="text-muted small">{{ s.reference }} · reported by {{ s.submitted_by.display_name }}</span></div>{% endblock %}
+{% block page_actions %}
+{% if s.is_editable and s.submitted_by_id == user.pk %}<a class="btn btn-outline-primary" href="{% url 'discipline:edit' s.pk %}"><i class="bi bi-pencil me-1"></i>Edit</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-xl-8">
+    {% if s.is_pending or s.status == 'RETURNED' or s.status == 'DRAFT' %}
+    <div class="alert alert-light border d-flex gap-2 align-items-center"><i class="bi bi-person-check fs-5 text-primary" aria-hidden="true"></i>
+      <div><strong>Next action:</strong> {{ s.next_action_label }}{% if s.is_pending %} <span class="text-muted">— waiting {{ pending_for.days }} day{{ pending_for.days|pluralize }}{% if pending_for.days == 0 %} (since {{ s.last_transition_at|time:"H:i" }}){% endif %}</span>{% endif %}</div></div>
+    {% endif %}
+
+    {% if actions %}
+    <section class="panel mb-3" style="border-color: var(--brass)"><div class="panel-head"><h2>Your decision</h2></div><div class="panel-body">
+      <form method="post" action="{% url 'discipline:transition' s.pk %}" data-confirm="Confirm this decision?">{% csrf_token %}
+        <input type="hidden" name="action" value="">
+        <input type="hidden" name="version" value="{{ s.version }}">
+        <label class="form-label" for="decision-comment">Comment or reason <span class="text-muted fw-normal">(required to return, reject or withdraw)</span></label>
+        <textarea class="form-control mb-3" id="decision-comment" name="comment" rows="3" maxlength="2000" minlength="5"></textarea>
+        <div class="d-flex flex-wrap gap-2">
+        {% for a in actions %}
+          <button type="submit" class="btn btn-{{ a.style }}" data-action-value="{{ a.action }}" data-label="{{ a.label }}" data-style="{{ a.style|cut:'outline-' }}" data-reason-required="{% if a.reason_required %}1{% else %}0{% endif %}"
+            data-confirm-text="{{ a.label }} statement {{ s.reference }}? This decision is recorded with your name and cannot be undone by you."><i class="bi {{ a.icon }} me-1" aria-hidden="true"></i>{{ a.label }}</button>
+        {% endfor %}
+        </div>
+      </form>
+    </div></section>
+    {% endif %}
+
+    <section class="panel mb-3"><div class="panel-head"><h2>Incident</h2></div><div class="panel-body">
+      <dl class="kv mb-3">
+        <dt>Cadet</dt><dd><a href="{% url 'cadets:detail' s.cadet_id %}">{{ s.cadet.full_name }}</a> <span class="text-muted">{{ s.cadet.cadet_number }}</span></dd>
+        <dt>Unit</dt><dd>{% if s.platoon %}{{ s.platoon }}{% else %}{{ s.cadet.company|default:"—" }}{% if s.cadet.platoon %} / {{ s.cadet.platoon.name }}{% endif %}{% endif %}</dd>
+        <dt>Date & time</dt><dd>{{ s.incident_at|date:"l j F Y, H:i" }}</dd>
+        <dt>Location</dt><dd>{{ s.location|default:"—" }}</dd>
+        <dt>Category</dt><dd>{{ s.category }}</dd>
+        <dt>Severity</dt><dd class="sev-{{ s.severity }} fw-medium">{{ s.get_severity_display }}</dd>
+      </dl>
+      <h3 class="h6">Factual description</h3>
+      <p>{{ s.description|linebreaksbr }}</p>
+      {% if s.observations %}<h3 class="h6">Behavioural observations</h3><p class="mb-0">{{ s.observations|linebreaksbr }}</p>{% endif %}
+    </div></section>
+
+    <section class="panel mb-3"><div class="panel-head"><h2>Evidence</h2></div>
+      {% if attachments %}<ul class="list-group list-group-flush">{% for a in attachments %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="bi bi-paperclip me-1"></i>{{ a.original_name }} <span class="small text-muted">{{ a.size|filesizeformat }} · {{ a.uploaded_at|date:"j M Y" }}</span></span><a class="btn btn-sm btn-outline-primary" href="{% url 'discipline:attachment_download' s.pk a.pk %}"><i class="bi bi-download me-1"></i>Download</a></li>{% endfor %}</ul>
+      {% else %}<div class="panel-body small text-muted">No supporting documents attached.</div>{% endif %}
+      {% if can_attach %}<div class="panel-body border-top"><form method="post" enctype="multipart/form-data" action="{% url 'discipline:attachment_upload' s.pk %}" class="d-flex flex-wrap gap-2 align-items-end">{% csrf_token %}
+        <div class="flex-grow-1"><label class="form-label small" for="{{ att_form.file.id_for_label }}">Add a file</label>{{ att_form.file }}<div class="form-text">{{ att_form.file.help_text }}</div></div>
+        <button class="btn btn-outline-primary" type="submit">Upload</button></form></div>{% endif %}
+    </section>
+
+    <section class="panel"><div class="panel-head"><h2>Comments</h2></div><div class="panel-body">
+      {% for r in reviews %}<div class="mb-3"><div class="small fw-medium">{{ r.author.display_name }} <span class="text-muted fw-normal">{{ r.created_at|date:"j M Y H:i" }}</span></div><div>{{ r.comment|linebreaksbr }}</div></div>{% empty %}<p class="small text-muted">No comments yet.</p>{% endfor %}
+      {% if can_comment %}<form method="post" action="{% url 'discipline:comment' s.pk %}">{% csrf_token %}<label class="form-label small" for="{{ comment_form.comment.id_for_label }}">Add a comment (does not change the status)</label>{{ comment_form.comment }}<button class="btn btn-sm btn-outline-primary mt-2" type="submit">Add comment</button></form>{% endif %}
+    </div></section>
+  </div>
+
+  <div class="col-xl-4">
+    {% if assessment %}<section class="panel mb-3"><div class="panel-head"><h2>Cadet's current grade</h2></div><div class="panel-body">{% grade assessment %}<p class="small text-muted mt-2 mb-0">Only approved statements change this grade.</p></div></section>{% endif %}
+    <section class="panel"><div class="panel-head"><h2>Decision history</h2></div><div class="panel-body">
+      <ul class="timeline">
+        <li><div class="small fw-medium">Created as draft</div><div class="t-meta">{{ s.created_at|date:"j M Y H:i" }} by {{ s.submitted_by.display_name }}</div></li>
+        {% for t in transitions %}
+        <li><div class="small fw-medium">{{ t.get_to_status_display }}</div>
+          <div class="t-meta">{{ t.created_at|date:"j M Y H:i" }} by {{ t.actor.display_name }} ({{ t.actor_role|role_label }})</div>
+          {% if t.comment %}<div class="small mt-1 p-2 bg-light rounded">“{{ t.comment }}”</div>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </div></section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "dashboards/_base.html" %}
+{% block page_actions %}<a class="btn btn-accent" href="{% url 'medical:create' %}"><i class="bi bi-file-earmark-medical me-1"></i>New medical record</a>{% endblock %}
+{% block content %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-xl-3"><a class="stat" href="{% url 'cadets:list' %}"><span class="stat-value">{{ cadet_count }}</span><span class="stat-label">Cadets in your care</span></a></div>
+  <div class="col-6 col-xl-3"><a class="stat" href="{% url 'medical:list' %}?status=OPEN"><span class="stat-value">{{ open_count }}</span><span class="stat-label">Open records</span></a></div>
+  <div class="col-6 col-xl-3"><a class="stat accent" href="{% url 'medical:list' %}?status=FOLLOW_UP"><span class="stat-value">{{ follow_count }}</span><span class="stat-label">Follow-ups</span></a></div>
+  <div class="col-6 col-xl-3"><a class="stat{% if overdue_follow %} alert-tone{% endif %}" href="{% url 'medical:list' %}?status=FOLLOW_UP"><span class="stat-value">{{ overdue_follow }}</span><span class="stat-label">Follow-ups overdue</span></a></div>
+</div>
+<div class="row g-3">
+  <div class="col-xl-5"><section class="panel h-100"><div class="panel-head"><h2>Follow-ups due</h2></div>
+    <ul class="list-group list-group-flush">{% for r in follow_ups %}<li class="list-group-item d-flex justify-content-between"><a href="{% url 'medical:detail' r.pk %}">{{ r.cadet.full_name }} <span class="small text-muted">{{ r.reference }}</span></a><span class="small {% if r.follow_up_date < today %}text-danger fw-medium{% else %}text-muted{% endif %}">{{ r.follow_up_date|date:"j M" }}</span></li>{% empty %}<li class="list-group-item small text-muted">No follow-ups pending.</li>{% endfor %}</ul></section></div>
+  <div class="col-xl-4"><section class="panel h-100"><div class="panel-head"><h2>Records you created</h2></div>
+    <ul class="list-group list-group-flush">{% for r in recent %}<li class="list-group-item small d-flex justify-content-between"><a href="{% url 'medical:detail' r.pk %}">{{ r.reference }}</a><span class="text-muted">{{ r.cadet.cadet_number }} · {{ r.assessment_date|date:"j M" }}</span></li>{% empty %}<li class="list-group-item small text-muted">None yet.</li>{% endfor %}</ul></section></div>
+  <div class="col-xl-3"><section class="panel h-100"><div class="panel-head"><h2>Fitness status</h2></div><div class="panel-body" style="height:240px"><canvas data-chart="ch-fit" role="img" aria-label="Records by fitness status"></canvas></div></section></div>
+</div>
+{{ chart_fitness|json_script:"ch-fit" }}
+{% endblock %}

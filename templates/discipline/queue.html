@@ -1,0 +1,25 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}Review queue{% endblock %}
+{% block page_title %}Review queue{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">Statements waiting for your decision. Items pending more than {{ overdue_days }} day{{ overdue_days|pluralize }} are marked overdue.</p>{% endblock %}
+{% block content %}
+<section class="panel mb-3">
+  {% if items %}
+  <div class="table-responsive"><table class="table">
+    <thead><tr><th>Reference</th><th>Cadet</th><th>Incident</th><th>Severity</th><th>Stage</th><th>Waiting</th><th></th></tr></thead>
+    <tbody>{% for i in items %}{% with s=i.s %}<tr>
+      <td><a class="fw-medium" href="{% url 'discipline:detail' s.pk %}">{{ s.reference }}</a></td>
+      <td>{{ s.cadet.full_name }}<div class="small text-muted">{{ s.platoon }}</div></td>
+      <td>{{ s.title|truncatechars:40 }}<div class="small text-muted">by {{ s.submitted_by.display_name }}</div></td>
+      <td class="sev-{{ s.severity }}">{{ s.get_severity_display }}</td>
+      <td>{% status_badge s %}</td>
+      <td>{% if i.overdue %}<span class="text-danger fw-medium"><i class="bi bi-alarm me-1"></i>{{ i.age.days }} day{{ i.age.days|pluralize }} — overdue</span>{% else %}{{ s.last_transition_at|timesince }}{% endif %}</td>
+      <td><a class="btn btn-sm btn-primary" href="{% url 'discipline:detail' s.pk %}">Review</a></td>
+    </tr>{% endwith %}{% endfor %}</tbody>
+  </table></div>
+  {% else %}{% include "components/empty.html" with icon="bi-inbox" title="Nothing waiting for you" hint="New submissions from your unit will appear here and in your notifications." %}{% endif %}
+</section>
+<section class="panel"><div class="panel-head"><h2>Your recent decisions</h2></div>
+  {% if recent %}<ul class="list-group list-group-flush">{% for s in recent %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><a href="{% url 'discipline:detail' s.pk %}">{{ s.reference }}</a> — {{ s.cadet.full_name }}</span>{% status_badge s %}</li>{% endfor %}</ul>
+  {% else %}<div class="panel-body small text-muted">No decisions recorded yet.</div>{% endif %}
+</section>
+{% endblock %}

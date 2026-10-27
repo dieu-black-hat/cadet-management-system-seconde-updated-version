@@ -1,0 +1,12 @@
+{% extends "app_base.html" %}{% block title %}Contact messages{% endblock %}
+{% block page_title %}Contact messages{% endblock %}
+{% block content %}
+<section class="panel">
+{% if page_obj.object_list %}<ul class="list-group list-group-flush">{% for m in page_obj %}
+  <li class="list-group-item"><div class="d-flex justify-content-between gap-2"><div><strong>{{ m.subject }}</strong> <span class="small text-muted">from {{ m.name }} &lt;{{ m.email }}&gt; · {{ m.created_at|date:"j M Y H:i" }}</span></div>
+  {% if m.is_handled %}<span class="badge-status st-APPROVED"><i class="bi bi-check2"></i>Handled</span>{% else %}<form method="post" action="{% url 'core:contact_message_handled' m.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary" type="submit">Mark handled</button></form>{% endif %}</div>
+  <p class="mb-0 mt-2 small">{{ m.message|linebreaksbr }}</p></li>{% endfor %}</ul>
+{% include "components/pagination.html" %}
+{% else %}{% include "components/empty.html" with icon="bi-envelope" title="No messages" %}{% endif %}
+</section>
+{% endblock %}

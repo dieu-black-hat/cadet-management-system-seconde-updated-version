@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body %}
+<main id="main" class="auth-wrap">
+  <div class="auth-card">
+    <a href="{% url 'core:home' %}" class="d-flex align-items-center gap-2 mb-4 text-decoration-none justify-content-center">
+      <span class="crest" aria-hidden="true">OC</span><span class="brand-title text-dark fs-5">Officer Cadet Management</span>
+    </a>
+    <div class="panel"><div class="panel-body p-4">
+      {% include "components/messages.html" %}
+      {% block content %}{% endblock %}
+    </div></div>
+    <p class="text-center small text-muted mt-3">Authorised personnel only. Activity is recorded.</p>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "app_base.html" %}{% block title %}Import cadets{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'cadets:list' %}">Cadets</a></li><li class="breadcrumb-item active" aria-current="page">Import / export</li></ol></nav>{% endblock %}
+{% block page_title %}Import and export cadets{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-7"><section class="panel"><div class="panel-head"><h2>Import from CSV</h2></div><div class="panel-body">
+    <p class="small text-muted">The whole file is validated first. If any row has a problem, nothing is imported and every problem is listed.</p>
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}{% include "components/form_fields.html" %}<button class="btn btn-primary mt-3" type="submit"><i class="bi bi-upload me-1"></i>Validate and import</button></form>
+    {% if errors %}<div class="alert alert-danger mt-3"><strong>Rows to fix</strong><ul class="mb-0 small">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+  </div></section></div>
+  <div class="col-lg-5"><section class="panel mb-3"><div class="panel-head"><h2>Expected columns</h2></div><div class="panel-body">
+    <code class="small d-block mb-2">{{ columns|join:"," }}</code>
+    <p class="small mb-0">Example row:<br><code>OC-2026-099,Aline,Uwase,F,INT-2026,ACOY,P1,2026-01-15,ACTIVE</code></p>
+  </div></section>
+  <section class="panel"><div class="panel-head"><h2>Export</h2></div><div class="panel-body">
+    <p class="small text-muted">Exports contain cadets in your scope only, with no medical information. Each export is recorded in the audit trail.</p>
+    <a class="btn btn-outline-primary" href="{% url 'cadets:export' %}"><i class="bi bi-download me-1"></i>Download CSV</a>
+  </div></section></div>
+</div>
+{% endblock %}

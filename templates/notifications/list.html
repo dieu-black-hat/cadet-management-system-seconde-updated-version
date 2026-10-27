@@ -1,0 +1,18 @@
+{% extends "app_base.html" %}{% load ocms %}{% block title %}Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block page_actions %}
+<div class="btn-group"><a class="btn btn-outline-primary{% if request.GET.unread != '1' %} active{% endif %}" href="?">All</a><a class="btn btn-outline-primary{% if request.GET.unread == '1' %} active{% endif %}" href="?unread=1">Unread</a></div>
+{% if unread_notifications %}<form method="post" action="{% url 'notifications:read_all' %}">{% csrf_token %}<button class="btn btn-outline-primary" type="submit"><i class="bi bi-check2-all me-1"></i>Mark all as read</button></form>{% endif %}
+{% endblock %}
+{% block content %}
+<section class="panel">
+  {% if page_obj.object_list %}
+  <ul class="list-group list-group-flush">{% for n in page_obj %}
+    <li class="list-group-item d-flex justify-content-between align-items-start gap-3{% if not n.is_read %} notif-unread{% endif %}">
+      <div><a class="fw-medium" href="{% url 'notifications:open' n.pk %}">{{ n.title }}</a>{% if n.message %}<div class="small">{{ n.message }}</div>{% endif %}<div class="small text-muted">{{ n.get_kind_display }} · {{ n.created_at|date:"j M Y H:i" }}</div></div>
+      {% if not n.is_read %}<span class="badge text-bg-warning">New</span>{% endif %}
+    </li>{% endfor %}</ul>
+  {% include "components/pagination.html" %}
+  {% else %}{% include "components/empty.html" with icon="bi-bell" title="No notifications" hint="Review requests and decisions on your statements will appear here." %}{% endif %}
+</section>
+{% endblock %}

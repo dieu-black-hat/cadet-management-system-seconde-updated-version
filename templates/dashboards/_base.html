@@ -1,0 +1,5 @@
+{% extends "app_base.html" %}{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block chart_js %}<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>{% endblock %}
+{% block page_title %}Good {% if now|date:"G"|add:0 < 12 %}morning{% elif now|date:"G"|add:0 < 18 %}afternoon{% else %}evening{% endif %}, {{ user.rank }} {{ user.last_name|default:user.first_name }}{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">{{ user.get_role_display }} · {{ now|date:"l j F Y" }}</p>{% endblock %}

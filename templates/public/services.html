@@ -1,0 +1,18 @@
+{% extends "public_base.html" %}{% block title %}Features{% endblock %}
+{% block content %}
+<section class="py-5"><div class="container">
+  <h1 class="mb-2">Features</h1>
+  <p class="text-muted mb-4" style="max-width: 62ch">What each part of the system provides, and who uses it.</p>
+  <div class="row g-3">
+    <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-person-badge"></i><h2 class="h5 mt-2">Accounts and roles</h2><p class="small text-muted">Administrator-created accounts with single-use set-password links, six roles, per-user extra permissions, suspension and deactivation.</p><p class="small mb-0"><strong>Used by:</strong> administrators</p></div></div>
+    <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-people"></i><h2 class="h5 mt-2">Cadet records</h2><p class="small text-muted">Registration, photographs, intake/company/platoon assignment with history, CSV import and export, archiving instead of deletion.</p><p class="small mb-0"><strong>Used by:</strong> administrators, all staff (read)</p></div></div>
+    <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-journal-text"></i><h2 class="h5 mt-2">Disciplinary statements</h2><p class="small text-muted">Drafts, evidence uploads, submission, correction and resubmission, with a full decision history.</p><p class="small mb-0"><strong>Used by:</strong> instructors</p></div></div>
+    <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-inbox"></i><h2 class="h5 mt-2">Review queues</h2><p class="small text-muted">Pending items with waiting time and overdue flags; approve, return or reject with a reason.</p><p class="small mb-0"><strong>Used by:</strong> platoon and company commanders</p></div></div>
+    <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-sliders"></i><h2 class="h5 mt-2">Discipline grading</h2><p class="small text-muted">Configurable bands, colours and deductions; versioned policies; an itemised explanation for every grade; audited overrides.</p><p class="small mb-0"><strong>Used by:</strong> administrators, commanders</p></div></div>
+    <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-heart-pulse"></i><h2 class="h5 mt-2">Medical module</h2><p class="small text-muted">Restricted records and private documents; commanders see only a released fitness summary.</p><p class="small mb-0"><strong>Used by:</strong> doctors</p></div></div>
+    <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-bar-chart-line"></i><h2 class="h5 mt-2">Reports</h2><p class="small text-muted">Trends, workflow statistics and grade distribution for a chosen period, with PDF and CSV export.</p><p class="small mb-0"><strong>Used by:</strong> commanders, administrators, auditors</p></div></div>
+    <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-bell"></i><h2 class="h5 mt-2">Notifications</h2><p class="small text-muted">In-app alerts for submissions, decisions and returns; optional e-mail with no sensitive details.</p><p class="small mb-0"><strong>Used by:</strong> everyone</p></div></div>
+    <div class="col-md-6 col-lg-4"><div class="feature"><i class="bi bi-shield-check"></i><h2 class="h5 mt-2">Audit trail</h2><p class="small text-muted">Sign-ins, permission changes, decisions, downloads and exports — append-only.</p><p class="small mb-0"><strong>Used by:</strong> administrators, auditors</p></div></div>
+  </div>
+</div></section>
+{% endblock %}

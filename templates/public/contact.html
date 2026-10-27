@@ -1,0 +1,21 @@
+{% extends "public_base.html" %}{% block title %}Contact{% endblock %}
+{% block content %}
+<section class="py-5"><div class="container"><div class="row g-4">
+  <div class="col-lg-4">
+    <h1>Contact</h1>
+    <p class="text-muted">Questions about the system or a problem signing in? Leave a message for the system administrator.</p>
+    <dl class="kv small"><dt><i class="bi bi-geo-alt me-1"></i>Address</dt><dd>RMA Gako — Computer Engineering</dd><dt><i class="bi bi-envelope me-1"></i>Response</dt><dd>By e-mail, usually within two working days</dd></dl>
+    <p class="small text-muted">Never send passwords, medical information or disciplinary details through this form.</p>
+  </div>
+  <div class="col-lg-8"><div class="panel"><div class="panel-body p-4">
+    <form method="post" novalidate>{% csrf_token %}
+      <div class="visually-hidden" aria-hidden="true"><label for="id_website">Leave empty</label>{{ form.website }}</div>
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+      <div class="row g-3">
+        {% for field in form %}{% if field.name != 'website' %}<div class="{{ field.field.widget.attrs.col|default:'col-md-6' }}"><label class="form-label required" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for e in field.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>{% endif %}{% endfor %}
+      </div>
+      <button class="btn btn-primary mt-3" type="submit"><i class="bi bi-send me-1"></i>Send message</button>
+    </form>
+  </div></div></div>
+</div></div></section>
+{% endblock %}

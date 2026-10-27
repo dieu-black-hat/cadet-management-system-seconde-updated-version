@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "OCMS: setup (first time)", "type": "shell",
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File scripts/setup.ps1" },
+      "linux": { "command": "bash scripts/setup.sh" }, "osx": { "command": "bash scripts/setup.sh" },
+      "problemMatcher": [] },
+    { "label": "OCMS: run server", "type": "shell",
+      "windows": { "command": ".venv\\Scripts\\python manage.py runserver 127.0.0.1:8000" },
+      "linux": { "command": ".venv/bin/python manage.py runserver 127.0.0.1:8000" },
+      "osx": { "command": ".venv/bin/python manage.py runserver 127.0.0.1:8000" },
+      "isBackground": true, "problemMatcher": [] },
+    { "label": "OCMS: run tests", "type": "shell",
+      "windows": { "command": ".venv\\Scripts\\python -m pytest" },
+      "linux": { "command": ".venv/bin/python -m pytest" }, "osx": { "command": ".venv/bin/python -m pytest" },
+      "group": "test", "problemMatcher": [] },
+    { "label": "OCMS: reset demo data", "type": "shell",
+      "windows": { "command": ".venv\\Scripts\\python manage.py seed_demo --reset" },
+      "linux": { "command": ".venv/bin/python manage.py seed_demo --reset" },
+      "osx": { "command": ".venv/bin/python manage.py seed_demo --reset" }, "problemMatcher": [] }
+  ]
+}

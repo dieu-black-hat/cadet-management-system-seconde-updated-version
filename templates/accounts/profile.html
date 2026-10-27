@@ -1,0 +1,34 @@
+{% extends "app_base.html" %}{% block title %}My profile{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li><li class="breadcrumb-item active" aria-current="page">My profile</li></ol></nav>{% endblock %}
+{% block page_title %}My profile{% endblock %}
+{% block page_actions %}<a class="btn btn-outline-primary" href="{% url 'accounts:password_change' %}"><i class="bi bi-key me-1"></i>Change password</a>{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <section class="panel mb-3"><div class="panel-head"><h2>Account</h2></div><div class="panel-body">
+      <dl class="kv">
+        <dt>Name</dt><dd>{{ user.display_name }}</dd>
+        <dt>Email</dt><dd>{{ user.email }}</dd>
+        <dt>Role</dt><dd>{{ user.get_role_display }}</dd>
+        <dt>Service number</dt><dd>{{ user.service_number|default:"—" }}</dd>
+        <dt>Last sign-in</dt><dd>{{ user.last_login|date:"j M Y, H:i"|default:"—" }}</dd>
+      </dl>
+      <hr>
+      <form method="post">{% csrf_token %}{% include "components/form_fields.html" %}
+        <button class="btn btn-primary mt-3" type="submit">Save changes</button></form>
+      <p class="small text-muted mt-2 mb-0">Name, rank and email are maintained by the system administrator.</p>
+    </div></section>
+    <section class="panel"><div class="panel-head"><h2>Recent sign-ins</h2></div>
+      <ul class="list-group list-group-flush">{% for e in recent_logins %}<li class="list-group-item small">{{ e.created_at|date:"j M Y, H:i" }} <span class="text-muted">from {{ e.ip_address|default:"unknown" }}</span></li>{% empty %}<li class="list-group-item small text-muted">No sign-ins recorded.</li>{% endfor %}</ul>
+    </section>
+  </div>
+  <div class="col-lg-5">
+    <section class="panel mb-3"><div class="panel-head"><h2>Assigned units</h2></div>
+      <ul class="list-group list-group-flush">{% for a in assignments %}<li class="list-group-item">{{ a.unit_label }}</li>{% empty %}<li class="list-group-item text-muted small">No organisational units assigned.</li>{% endfor %}</ul>
+    </section>
+    <section class="panel"><div class="panel-head"><h2>What you can do</h2></div>
+      <ul class="list-group list-group-flush small">{% for p in perm_labels %}<li class="list-group-item"><i class="bi bi-check2 text-success me-2" aria-hidden="true"></i>{{ p }}</li>{% endfor %}</ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

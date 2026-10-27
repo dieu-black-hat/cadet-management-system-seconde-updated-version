@@ -1,0 +1,10 @@
+{% extends "app_base.html" %}{% block title %}Permission matrix{% endblock %}
+{% block page_title %}Role permission matrix{% endblock %}
+{% block page_subtitle %}<p class="text-muted mb-0 mt-1">Defaults for each role. Record access is further limited to each person's assigned company or platoon. Extra permissions can be granted per user, with a reason.</p>{% endblock %}
+{% block content %}
+<section class="panel"><div class="table-responsive"><table class="table table-sm align-middle">
+  <thead><tr><th scope="col">Permission</th>{% for r in roles %}<th scope="col" class="text-center">{{ r.label }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for row in rows %}<tr><th scope="row" class="fw-normal">{{ row.label }} <code class="small text-muted">{{ row.code }}</code></th>
+    {% for c in row.cells %}<td class="text-center">{% if c %}<i class="bi bi-check-circle-fill text-success" aria-label="Allowed"></i>{% else %}<i class="bi bi-dash text-muted" aria-label="Not allowed"></i>{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+</table></div></section>
+{% endblock %}

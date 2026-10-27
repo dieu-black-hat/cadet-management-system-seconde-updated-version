@@ -1,0 +1,10 @@
+{% extends "app_base.html" %}{% block title %}{% if is_new %}New medical record{% else %}Update medical record{% endif %}{% endblock %}
+{% block breadcrumbs %}<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'medical:list' %}">Medical</a></li><li class="breadcrumb-item active" aria-current="page">{% if is_new %}New record{% else %}{{ r.reference }}{% endif %}</li></ol></nav>{% endblock %}
+{% block page_title %}{% if is_new %}New medical record{% else %}Update {{ r.reference }}{% endif %}{% endblock %}
+{% block content %}
+<section class="panel restricted" style="max-width: 900px"><div class="panel-body">
+  <p class="small text-muted">The “summary approved for command” and fitness status are the only details commanders can see. Keep diagnoses in the clinical notes.</p>
+  <form method="post" novalidate>{% csrf_token %}{% include "components/form_fields.html" %}
+  <div class="mt-4"><button class="btn btn-primary" type="submit">{% if is_new %}Save record{% else %}Save update{% endif %}</button> <a class="btn btn-link" href="{% if is_new %}{% url 'medical:list' %}{% else %}{% url 'medical:detail' r.pk %}{% endif %}">Cancel</a></div></form>
+</div></section>
+{% endblock %}

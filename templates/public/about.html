@@ -1,0 +1,21 @@
+{% extends "public_base.html" %}{% block title %}About{% endblock %}
+{% block content %}
+<section class="py-5"><div class="container" style="max-width: 860px">
+  <h1 class="mb-3">About the system</h1>
+  <p class="lead">The Officer Cadet Management System digitises how a training academy records, reviews and evaluates cadet discipline and welfare.</p>
+  <h2 class="mt-4">Why it exists</h2>
+  <p>Disciplinary incidents, behavioural observations and health statements were kept on paper. Approvals moved by hand between instructors, platoon commanders and company commanders, which caused delays, lost documents and inconsistent decisions. Commanders had no reliable view of trends.</p>
+  <h2 class="mt-4">What it does</h2>
+  <ul>
+    <li>Keeps one authoritative record per cadet, with assignment history.</li>
+    <li>Routes each disciplinary statement through platoon and company review, with mandatory reasons for returns and rejections.</li>
+    <li>Calculates a discipline grade from approved statements only, using a policy the administrator configures and versions.</li>
+    <li>Holds medical records in a separate, restricted module for authorised medical staff.</li>
+    <li>Produces reports and exports limited to each user's authorised units.</li>
+  </ul>
+  <h2 class="mt-4">What it does not do</h2>
+  <p>It never dismisses or sanctions a cadet automatically. A grade band can flag a cadet for review; any personnel decision stays with authorised people following the institution's formal procedures.</p>
+  <h2 class="mt-4">Project</h2>
+  <p class="mb-0">Developed as a Web Technology project — University of Rwanda, College of Science and Technology, School of ICT (Computer Engineering, Gako). All data in this demonstration is synthetic.</p>
+</div></section>
+{% endblock %}
