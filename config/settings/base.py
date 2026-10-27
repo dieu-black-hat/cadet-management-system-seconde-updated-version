@@ -151,7 +151,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Confidential documents are stored OUTSIDE any public URL and are only
 # served through permission-checked views.
-PRIVATE_MEDIA_ROOT = Path(os.getenv("PRIVATE_MEDIA_ROOT", BASE_DIR / "private_media"))
+# `or` (not a getenv default) so an empty PRIVATE_MEDIA_ROOT= line in .env
+# still falls back to the private_media folder instead of the project root.
+PRIVATE_MEDIA_ROOT = Path(os.getenv("PRIVATE_MEDIA_ROOT") or BASE_DIR / "private_media")
 MAX_UPLOAD_SIZE_MB = int(os.getenv("MAX_UPLOAD_SIZE_MB", "5"))
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024

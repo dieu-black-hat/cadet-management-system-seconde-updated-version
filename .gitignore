@@ -11,3 +11,6 @@ private_media/*
 .coverage
 backups/
 *.dump
+cadet_photos/
+statement_attachments/
+medical/
